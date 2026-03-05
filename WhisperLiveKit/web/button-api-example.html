@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Button Transcription API 示例</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .config-box {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .config-box h2 {
+            font-size: 20px;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .config-group {
+            margin-bottom: 15px;
+        }
+        
+        .config-label {
+            display: block;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 5px;
+        }
+        
+        .config-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .config-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+        }
+        
+        select.config-input {
+            background: white;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+            color: white;
+        }
+        
+        .btn-success:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(76, 175, 80, 0.4);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+        }
+        
+        .btn-danger:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(231, 76, 60, 0.4);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .status-box {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status-box.info {
+            background: #e3f2fd;
+            color: #1976d2;
+            border-left: 4px solid #1976d2;
+        }
+        
+        .status-box.success {
+            background: #e8f5e9;
+            color: #388e3c;
+            border-left: 4px solid #388e3c;
+        }
+        
+        .status-box.warning {
+            background: #fff3e0;
+            color: #f57c00;
+            border-left: 4px solid #f57c00;
+        }
+        
+        .status-box.error {
+            background: #ffebee;
+            color: #d32f2f;
+            border-left: 4px solid #d32f2f;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+        
+        .transcript-box {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .transcript-line {
+            padding: 10px;
+            margin-bottom: 10px;
+            background: white;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .transcript-line.partial {
+            border-left-color: #ff9800;
+            background: #fff3e0;
+        }
+        
+        .transcript-line .label {
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 5px;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .transcript-line .content {
+            color: #333;
+            font-size: 15px;
+        }
+        
+        .transcript-line .time {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+            text-align: right;
+        }
+        
+        .transcript-line.current-line {
+            border-left-color: #4CAF50;
+            background: #f1f8e9;
+        }
+        
+        .speaker-badge {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            line-height: 24px;
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50%;
+            font-size: 12px;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+        
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .status-indicator.idle {
+            background: #e0e0e0;
+            color: #666;
+        }
+        
+        .status-indicator.connecting {
+            background: #bbdefb;
+            color: #1976d2;
+        }
+        
+        .status-indicator.ready {
+            background: #c8e6c9;
+            color: #388e3c;
+        }
+        
+        .status-indicator.recording {
+            background: #ffecb3;
+            color: #ff8f00;
+            animation: pulse 1.5s infinite;
+        }
+        
+        .status-indicator.processing {
+            background: #e1bee7;
+            color: #7b1fa2;
+        }
+        
+        .status-indicator.error {
+            background: #ffcdd2;
+            color: #d32f2f;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .code-example {
+            margin-top: 30px;
+            border-top: 1px solid #e0e0e0;
+            padding-top: 20px;
+        }
+        
+        .code-example h3 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 14px;
+            border-top: 1px solid #e0e0e0;
+            margin-top: 30px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .controls {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎤 Button Transcription API 示例</h1>
+            <p>基于官方示例封装的编程接口，提供简单的按钮控制转录功能</p>
+        </div>
+        
+        <div class="content">
+            <!-- 配置区域 -->
+            <div class="config-box">
+                <h2>⚙️ 配置选项</h2>
+                <div class="config-group">
+                    <label class="config-label">服务器地址</label>
+                    <input type="text" id="serverUrl" class="config-input" value="ws://localhost:8000" placeholder="ws://localhost:8000">
+                </div>
+                
+                <div class="config-group">
+                    <label class="config-label">语言</label>
+                    <select id="language" class="config-input">
+                        <option value="">自动检测</option>
+                        <option value="zh" selected>中文</option>
+                        <option value="en">英语</option>
+                        <option value="ja">日语</option>
+                    </select>
+                </div>
+                
+                <div class="config-group">
+                    <label class="config-label">麦克风</label>
+                    <select id="microphone" class="config-input">
+                        <option value="">默认麦克风</option>
+                    </select>
+                </div>
+                
+                <div class="config-group">
+                    <label class="config-label">
+                        <input type="checkbox" id="diarization" checked> 启用说话人分离
+                    </label>
+                </div>
+            </div>
+            
+            <!-- 状态显示 -->
+            <div id="status" class="status-box info">
+                <div>🔄 准备就绪，点击"开始录音"按钮开始转录</div>
+            </div>
+            
+            <!-- 状态指示器 -->
+            <div id="stateIndicator" class="status-indicator idle">
+                <span>状态: IDLE</span>
+            </div>
+            
+            <!-- 控制按钮 -->
+            <div class="controls">
+                <button id="startBtn" class="btn btn-primary">
+                    <span>▶️ 开始录音</span>
+                </button>
+                <button id="stopBtn" class="btn btn-danger" disabled>
+                    <span>⏹️ 停止录音</span>
+                </button>
+                <button id="toggleBtn" class="btn btn-success">
+                    <span>🔄 切换状态</span>
+                </button>
+                <button id="clearBtn" class="btn">
+                    <span>🗑️ 清空结果</span>
+                </button>
+            </div>
+            
+            <!-- 转录结果显示 -->
+            <div class="transcript-box" id="transcript">
+                <p style="color: #999; text-align: center;">转录结果将显示在这里...</p>
+            </div>
+            
+            <!-- 代码示例 -->
+            <div class="code-example">
+                <h3>💻 使用代码示例</h3>
+                
+                <pre class="code-block">// 创建客户端
+const client = new ButtonTranscriptionAPI({
+  serverUrl: 'ws://localhost:8000',
+  language: 'zh',
+  diarization: true,
+  microphoneId: null // 使用默认麦克风
+});
+
+// 设置回调
+client.onresult = (result) => {
+  console.log('转录结果:', result.text);
+  if (result.isPartial) {
+    console.log('中间结果');
+  } else {
+    console.log('最终结果');
+  }
+};
+
+client.onerror = (error) => {
+  console.error('错误:', error.message);
+};
+
+client.onstatuschange = (status) => {
+  console.log('状态变化:', status.current, status.message);
+};
+
+// 开始转录
+await client.start();
+
+// 停止转录
+client.stop();</pre>
+            </div>
+            
+            <div class="footer">
+                <p>Button Transcription API 示例 &copy; 2023 - 基于官方示例封装的编程接口</p>
+                <p>注意：此API与官方示例 live_transcription.html 完全兼容，使用相同的后端协议</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 引入API -->
+    <script src="button-transcription-api.js"></script>
+    
+    <script>
+        // 客户端实例
+        let client = null;
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', async () => {
+            // 加载麦克风列表
+            try {
+                await loadMicrophones();
+            } catch (e) {
+                console.log('无法加载麦克风列表:', e);
+                updateStatus('加载麦克风失败: ' + e.message, 'error');
+            }
+            
+            // 绑定按钮事件
+            document.getElementById('startBtn').addEventListener('click', startTranscription);
+            document.getElementById('stopBtn').addEventListener('click', stopTranscription);
+            document.getElementById('toggleBtn').addEventListener('click', toggleTranscription);
+            document.getElementById('clearBtn').addEventListener('click', clearTranscript);
+        });
+        
+        // 加载麦克风列表
+        async function loadMicrophones() {
+            try {
+                const devices = await ButtonTranscriptionAPI.getMicrophones();
+                const select = document.getElementById('microphone');
+                select.innerHTML = '<option value="">默认麦克风</option>';
+                
+                devices.forEach((mic) => {
+                    const option = document.createElement('option');
+                    option.value = mic.deviceId;
+                    option.textContent = mic.label || `麦克风 ${mic.deviceId.slice(0, 8)}...`;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.log('加载麦克风失败:', error);
+                throw error;
+            }
+        }
+        
+        // 更新状态显示
+        function updateStatus(message, type = 'info') {
+            const element = document.getElementById('status');
+            element.innerHTML = `<div>${message}</div>`;
+            element.className = `status-box ${type}`;
+        }
+        
+        // 更新状态指示器
+        function updateStateIndicator(state, text = null) {
+            const element = document.getElementById('stateIndicator');
+            element.className = `status-indicator ${state}`;
+            element.innerHTML = `<span>状态: ${text || state.toUpperCase()}</span>`;
+        }
+        
+        // 渲染转录结果（参照官方示例的单输出框更新方式）
+        let lastTranscriptSignature = null;
+        
+        function renderTranscript(result) {
+            const container = document.getElementById('transcript');
+            
+            // 如果没有结果，显示默认信息
+            if ((!result.lines || result.lines.length === 0) && !result.text) {
+                container.innerHTML = '<p style="color: #999; text-align: center;">转录结果将显示在这里...</p>';
+                lastTranscriptSignature = null;
+                return;
+            }
+            
+            // 创建签名，避免不必要的重绘
+            const signature = JSON.stringify({
+                text: result.text || '',
+                isPartial: result.isPartial,
+                lines: result.lines || [],
+                status: result.status || 'active_transcription'
+            });
+            
+            if (lastTranscriptSignature === signature) {
+                return; // 内容未变化，跳过更新
+            }
+            
+            lastTranscriptSignature = signature;
+            
+            let transcriptHtml = '';
+            const lines = result.lines || [];
+            const hasPartialText = result.isPartial && result.text;
+            
+            // 显示所有已完成的句子
+            lines.forEach((line, index) => {
+                if (line.text && line.text.trim()) {
+                    // 构建时间信息
+                    let timeInfo = '';
+                    // 确保 start 和 end 是数字类型
+                    const start = parseFloat(line.start);
+                    const end = parseFloat(line.end);
+                    if (!isNaN(start) && !isNaN(end)) {
+                        timeInfo = `${start.toFixed(1)}-${end.toFixed(1)}s`;
+                    } else if (line.start !== undefined && line.end !== undefined) {
+                        // 如果转换失败但值存在，直接显示原始值
+                        timeInfo = `${line.start}-${line.end}`;
+                    }
+                    
+                    // 构建说话人信息
+                    let speakerBadge = '';
+                    if (line.speaker !== undefined && line.speaker > 0) {
+                        speakerBadge = `<span class="speaker-badge">${line.speaker}</span>`;
+                    }
+                    
+                    // 构建语言标签（如果检测到语言）
+                    let languageLabel = '';
+                    if (line.detected_language) {
+                        languageLabel = `<span style="font-size: 11px; color: #666; margin-left: 8px; padding: 2px 6px; background: #f0f0f0; border-radius: 3px;">${line.detected_language}</span>`;
+                    }
+                    
+                    transcriptHtml += `<div class="transcript-line${index === lines.length - 1 && !hasPartialText ? ' current-line' : ''}">`;
+                    
+                    // 第一行：说话人徽章和时间信息
+                    if (speakerBadge || timeInfo) {
+                        transcriptHtml += `<div class="label">`;
+                        if (speakerBadge) transcriptHtml += speakerBadge;
+                        if (timeInfo) transcriptHtml += `<span style="font-size: 11px; color: #666; margin-left: 5px;">${timeInfo}</span>`;
+                        if (languageLabel) transcriptHtml += languageLabel;
+                        transcriptHtml += `</div>`;
+                    }
+                    
+                    // 第二行：转录文本
+                    transcriptHtml += `<div class="content">${line.text}</div>`;
+                    transcriptHtml += `</div>`;
+                }
+            });
+            
+            // 如果有缓冲区文本（中间结果），显示为正在识别的文本
+            if (hasPartialText) {
+                // 如果已经有完成的句子，添加一个当前行指示器
+                if (lines.length > 0) {
+                    transcriptHtml += `<div class="transcript-line partial">`;
+                    transcriptHtml += `<div class="label">🔄 正在识别...</div>`;
+                } else {
+                    // 如果还没有完成的句子，只显示中间结果
+                    transcriptHtml += `<div class="transcript-line partial" style="border-left-color: #2196F3;">`;
+                    transcriptHtml += `<div class="label">🎤 语音识别中...</div>`;
+                }
+                
+                transcriptHtml += `<div class="content">${result.text}</div>`;
+                transcriptHtml += `</div>`;
+                
+                // 如果有剩余时间，显示处理状态
+                const remainingTime = parseFloat(result.remainingTime);
+                if (!isNaN(remainingTime) && remainingTime > 0) {
+                    transcriptHtml += `<div style="font-size: 12px; color: #666; text-align: center; padding: 5px 0;">处理延迟: ${remainingTime.toFixed(1)}秒</div>`;
+                }
+            }
+            
+            // 如果没有生成任何内容，显示等待信息
+            if (!transcriptHtml) {
+                transcriptHtml = '<p style="color: #999; text-align: center;">正在等待转录结果...</p>';
+            }
+            
+            container.innerHTML = transcriptHtml;
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        // 清空转录显示
+        function clearTranscript() {
+            const container = document.getElementById('transcript');
+            container.innerHTML = '<p style="color: #999; text-align: center;">转录结果将显示在这里...</p>';
+            lastTranscriptSignature = null;
+        }
+        
+        // 开始转录
+        async function startTranscription() {
+            const serverUrl = document.getElementById('serverUrl').value;
+            const language = document.getElementById('language').value;
+            const microphoneId = document.getElementById('microphone').value;
+            const diarization = document.getElementById('diarization').checked;
+            
+            // 如果已经有客户端，先销毁
+            if (client) {
+                client.destroy();
+                client = null;
+            }
+            
+            try {
+                updateStatus('正在创建客户端...', 'info');
+                updateStateIndicator('connecting', 'CONNECTING');
+                
+                // 创建客户端
+                client = new ButtonTranscriptionAPI({
+                    serverUrl: serverUrl,
+                    language: language || null,
+                    diarization: diarization,
+                    microphoneId: microphoneId || null,
+                    autoStart: true
+                });
+                
+                // 设置回调
+                client.onconnect = () => {
+                    updateStatus('已连接服务器', 'success');
+                };
+                
+                client.onready = () => {
+                    updateStatus('服务器准备就绪', 'success');
+                    updateStateIndicator('ready', 'READY');
+                };
+                
+                client.onresult = (result) => {
+                    renderTranscript(result);
+                };
+                
+                client.onpartial = (result) => {
+                    // 中间结果在renderTranscript中处理
+                    renderTranscript(result);
+                };
+                
+                client.onstatuschange = (status) => {
+                    updateStateIndicator(status.current, status.current.toUpperCase());
+                    if (status.message) {
+                        updateStatus(status.message, 'info');
+                    }
+                };
+                
+                client.onerror = (error) => {
+                    updateStatus('错误: ' + error.message, 'error');
+                    updateStateIndicator('error', 'ERROR');
+                    resetButtons();
+                };
+                
+                client.oncompletetion = () => {
+                    updateStatus('转录完成', 'success');
+                    updateStateIndicator('idle', 'IDLE');
+                    resetButtons();
+                };
+                
+                client.ondisconnect = () => {
+                    updateStatus('已断开连接', 'info');
+                };
+                
+                // 清空之前的转录结果
+                clearTranscript();
+                
+                // 更新按钮状态
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('stopBtn').disabled = false;
+                document.getElementById('toggleBtn').disabled = false;
+                
+                // 开始转录
+                await client.start();
+                
+            } catch (error) {
+                updateStatus('启动失败: ' + error.message, 'error');
+                updateStateIndicator('error', 'ERROR');
+                resetButtons();
+                console.error('启动失败:', error);
+            }
+        }
+        
+        // 停止转录
+        function stopTranscription() {
+            if (client) {
+                client.stop();
+                updateStatus('正在停止录音...', 'warning');
+                updateStateIndicator('processing', 'PROCESSING');
+                
+                document.getElementById('stopBtn').disabled = true;
+                document.getElementById('toggleBtn').disabled = true;
+            }
+        }
+        
+        // 切换转录状态
+        async function toggleTranscription() {
+            if (client) {
+                if (client.isRecording) {
+                    stopTranscription();
+                } else {
+                    await startTranscription();
+                }
+            } else {
+                await startTranscription();
+            }
+        }
+        
+        // 重置按钮状态
+        function resetButtons() {
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+            document.getElementById('toggleBtn').disabled = false;
+        }
+        
+        // 页面卸载时清理
+        window.addEventListener('beforeunload', () => {
+            if (client) {
+                client.destroy();
+            }
+        });
+    </script>
+</body>
+</html>
