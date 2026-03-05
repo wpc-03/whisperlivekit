@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  whisper-asr-gpu:
+    build:
+      context: .
+      dockerfile: Dockerfile.gpu
+    image: whisperlivekit:gpu
+    container_name: whisper-asr-gpu
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount Whisper model and NeMo diarization model from D: drive
+      - D:/python/FastWhisperTranscriber/model:/app/models:ro
+      # Mount keywords file
+      - ./keywords_example.txt:/app/keywords.txt:ro
+      # Mount warmup audio file
+      - D:/python/whisperlivekit/samples_zh.wav:/app/samples_zh.wav:ro
+      # Logs directory
+      - ./logs:/app/logs
+      # SSL certificates
+      - ./cert.pem:/app/ssl/cert.pem:ro
+      - ./key.pem:/app/ssl/key.pem:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+      - HF_HOME=/app/models
+      - TRANSFORMERS_CACHE=/app/models
+      - KEYWORDS_FILE=/app/keywords.txt
+    command: [
+      "--model", "small",  # Changed from 'tiny' to 'small' for better accuracy with GPU
+      "--model-path", "/app/models/models--Systran--faster-whisper-small",
+      "--language", "zh",
+      "--backend-policy", "localagreement",
+      "--backend", "faster-whisper",
+      "--pcm-input",
+      "--keywords-file", "/app/keywords.txt",
+      "--host", "0.0.0.0",
+      "--port", "8000",
+      "--ssl-certfile", "/app/ssl/cert.pem",
+      "--ssl-keyfile", "/app/ssl/key.pem",
+      # "--diarization",
+      # "--diarization-model", "/app/models/models--nvidia--diar_streaming_sortformer_4spk-v2/snapshots/6dbf0d69730bfee097056692b86525a0a23b32f9/diar_streaming_sortformer_4spk-v2.nemo",
+      "--beam-size", "1",
+      "--min-chunk-size", "0.05",
+      "--buffer_trimming_sec", "15",
+      # "--no-vac",
+      "--confidence-validation",
+      "--warmup-file", "/app/samples_zh.wav",
+      "--log-level", "INFO"
+    ]
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys, ssl, http.client; context = ssl._create_unverified_context(); conn = http.client.HTTPSConnection('localhost', 8000, context=context); conn.request('GET', '/'); resp = conn.getresponse(); sys.exit(0 if resp.status == 200 else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s

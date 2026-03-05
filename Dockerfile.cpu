@@ -1,0 +1,48 @@
+FROM python:3.12.10-slim
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+ENV PIP_TIMEOUT=1000
+ENV PIP_DEFAULT_TIMEOUT=1000
+ENV PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple
+ENV PIP_EXTRA_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/
+
+WORKDIR /app
+
+# Install ffmpeg and git (needed for NeMo)
+RUN echo "deb http://mirrors.aliyun.com/debian/ bookworm main non-free non-free-firmware contrib" > /etc/apt/sources.list && \
+    echo "deb http://mirrors.aliyun.com/debian/ bookworm-updates main non-free non-free-firmware contrib" >> /etc/apt/sources.list && \
+    echo "deb http://mirrors.aliyun.com/debian/ bookworm-backports main non-free non-free-firmware contrib" >> /etc/apt/sources.list && \
+    echo "deb http://mirrors.aliyun.com/debian-security bookworm-security main non-free non-free-firmware contrib" >> /etc/apt/sources.list && \
+    apt-get update -o Acquire::http::Timeout=300 -o Acquire::https::Timeout=300 && \
+    apt-get install -y --no-install-recommends ffmpeg git && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install CPU-only PyTorch with retry and timeout (matching local environment)
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir --default-timeout=1000 \
+        torch==2.10.0 torchaudio==2.10.0 \
+        --index-url https://download.pytorch.org/whl/cpu
+
+# Copy NeMo source code (from local)
+COPY NeMo /app/NeMo
+
+# Install NeMo from local source (ASR only, lighter)
+RUN pip install --no-cache-dir --default-timeout=1000 /app/NeMo[nemo,asr]
+
+# Copy project files (WhisperLiveKit with our modifications)
+COPY . .
+
+# Create symlink to fix case sensitivity issue
+RUN ln -s /app/WhisperLiveKit /app/whisperlivekit
+
+# Install WhisperLiveKit from local source (includes our modifications)
+RUN pip install --no-cache-dir --default-timeout=1000 -e .[chinese_conversion]
+
+# Install OpenCC for better Chinese conversion quality
+RUN pip install opencc-python-reimplemented
+
+EXPOSE 8000
+
+ENTRYPOINT ["whisperlivekit-server", "--host", "0.0.0.0"]
+CMD ["--model", "tiny"]

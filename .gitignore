@@ -1,0 +1,155 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+#  Usually these files are written by a python script from a template
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# PyBuilder
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
+#   However, in case of collaboration, if having platform-specific dependencies or dependencies
+#   having no cross-platform support, pipenv may install dependencies that don't work, or not
+#   install all needed dependencies.
+#Pipfile.lock
+
+# PEP 582; used by e.g. github.com/David-OConnor/pyflow
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+*.wav
+run_*.sh
+
+# Downloaded models
+*.pt 
+
+# Debug & testing
+test_*.py
+launch.json
+.DS_Store
+test/*
+nllb-200-distilled-600M-ctranslate2/*
+*.mp3
+
+# NeMo toolkit
+nemo/
+NeMo/              # NVIDIA NeMo工具包完整目录（约2GB+）
+
+# ===== 大文件排除规则（防止2.2GB问题）=====
+*.bin              # 二进制文件
+*.h5               # HDF5文件
+*.pth              # PyTorch模型
+*.pt               # PyTorch模型
+*.pkl              # Pickle文件
+*.pickle           # Pickle文件
+*.zip              # 压缩文件
+*.tar.gz           # 压缩文件
+*.7z               # 压缩文件
+*.mp4              # 视频文件
+*.avi              # 视频文件
+*.mp3              # 音频文件
+*.wav              # 音频文件
+
+# ===== 数据集和模型目录 =====
+data/              # 数据集目录
+datasets/          # 数据集目录
+models/            # 模型目录
+checkpoints/       # 检查点目录
+logs/              # 日志目录
+temp/              # 临时文件
+tmp/               # 临时文件
