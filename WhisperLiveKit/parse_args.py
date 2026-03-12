@@ -228,6 +228,47 @@ def parse_args():
         help="Path to a text file containing keywords to be used as init prompt, one keyword per line.",
     )
     
+    # Hotword detection arguments
+    parser.add_argument(
+        "--hotword-model-dir",
+        type=str,
+        default=r"D:\python\FastWhisperTranscriber\model\sherpa-onnx-kws-zipformer-wenetspeech",
+        dest="hotword_model_dir",
+        help="Path to the hotword detection model directory containing encoder.onnx, decoder.onnx, etc.",
+    )
+    
+    parser.add_argument(
+        "--hotword-keywords-file",
+        type=str,
+        default=None,
+        dest="hotword_keywords_file",
+        help="Path to the hotword keywords file (e.g., keywords.txt). If not specified, will use <hotword-model-dir>/keywords.txt.",
+    )
+    
+    parser.add_argument(
+        "--hotword-threshold",
+        type=float,
+        default=0.6,
+        dest="hotword_threshold",
+        help="Detection threshold for hotword recognition (0.0-1.0).",
+    )
+    
+    parser.add_argument(
+        "--hotword-sample-rate",
+        type=int,
+        default=16000,
+        dest="hotword_sample_rate",
+        help="Sample rate for hotword detection model.",
+    )
+    
+    parser.add_argument(
+        "--hotword-threads",
+        type=int,
+        default=4,
+        dest="hotword_threads",
+        help="Number of threads for hotword detection inference.",
+    )
+    
     parser.add_argument(
         "--beam-size",
         type=int,

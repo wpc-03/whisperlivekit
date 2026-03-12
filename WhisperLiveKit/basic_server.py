@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import pathlib
+import time
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
@@ -10,6 +11,7 @@ from fastapi.staticfiles import StaticFiles
 
 from whisperlivekit import (AudioProcessor, TranscriptionEngine,
                             get_inline_ui_html, parse_args)
+from whisperlivekit.hotword_service import HotwordService
 import whisperlivekit.web as webpkg
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -19,13 +21,36 @@ logger.setLevel(logging.DEBUG)
 
 args = parse_args()
 transcription_engine = None
+hotword_service = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):    
-    global transcription_engine
+    global transcription_engine, hotword_service
+    
+    # 初始化转录引擎
     transcription_engine = TranscriptionEngine(
         **vars(args),
     )
+    
+    # 初始化唤醒词检测服务
+    if args.hotword_model_dir:
+        # 确定关键词文件路径
+        keywords_file = args.hotword_keywords_file
+        if not keywords_file:
+            keywords_file = f"{args.hotword_model_dir}/keywords.txt"
+        
+        hotword_service = HotwordService(
+            model_dir=args.hotword_model_dir,
+            keywords_file=keywords_file,
+            threshold=args.hotword_threshold,
+            sample_rate=args.hotword_sample_rate,
+            num_threads=args.hotword_threads
+        )
+        logger.info(f"唤醒词检测服务初始化完成，模型目录: {args.hotword_model_dir}，阈值: {args.hotword_threshold}")
+    else:
+        hotword_service = None
+        logger.info("未配置唤醒词模型目录，唤醒词检测服务未初始化")
+    
     yield
 
 app = FastAPI(lifespan=lifespan)
@@ -103,6 +128,71 @@ async def websocket_endpoint(websocket: WebSocket):
             
         await audio_processor.cleanup()
         logger.info("WebSocket endpoint cleaned up successfully.")
+
+
+@app.websocket("/hotword")
+async def hotword_websocket_endpoint(websocket: WebSocket):
+    """唤醒词检测WebSocket端点"""
+    global hotword_service
+    
+    # 检查唤醒词服务是否可用
+    if not hotword_service:
+        logger.error("唤醒词检测服务不可用，拒绝连接")
+        await websocket.close(code=1008, reason="Hotword service not available")
+        return
+    
+    await websocket.accept()
+    
+    # 生成连接ID
+    import uuid
+    connection_id = str(uuid.uuid4())[:8]
+    logger.info(f"唤醒词检测WebSocket连接打开，ID: {connection_id}")
+    
+    # 为连接创建KWS流
+    if not hotword_service.create_stream(connection_id):
+        logger.error(f"无法为连接 {connection_id} 创建KWS流")
+        await websocket.close(code=1011, reason="Failed to create KWS stream")
+        return
+    
+    try:
+        # 发送初始配置
+        await websocket.send_json({
+            "type": "config",
+            "connection_id": connection_id,
+            "sample_rate": hotword_service.sample_rate,
+            "threshold": hotword_service.threshold,
+            "useAudioWorklet": bool(args.pcm_input)
+        })
+        
+        # 主循环：接收音频数据
+        while True:
+            message = await websocket.receive_bytes()
+            # 处理音频数据，检测唤醒词
+            wakeword = hotword_service.process_audio(connection_id, message)
+            
+            if wakeword:
+                # 发送唤醒词检测通知
+                await websocket.send_json({
+                    "type": "wakeword_detected",
+                    "wakeword": wakeword,
+                    "timestamp": time.time()
+                })
+                logger.info(f"向连接 {connection_id} 发送唤醒词检测通知: {wakeword}")
+                
+    except WebSocketDisconnect:
+        logger.info(f"唤醒词检测WebSocket连接断开，ID: {connection_id}")
+    except KeyError as e:
+        if 'bytes' in str(e):
+            logger.warning(f"客户端 {connection_id} 已关闭连接")
+        else:
+            logger.error(f"连接 {connection_id} 的KeyError: {e}", exc_info=True)
+    except Exception as e:
+        logger.error(f"唤醒词检测WebSocket端点异常 (连接: {connection_id}): {e}", exc_info=True)
+    finally:
+        # 清理资源
+        hotword_service.delete_stream(connection_id)
+        logger.info(f"唤醒词检测连接 {connection_id} 清理完成")
+
 
 def main():
     """Entry point for the CLI command."""

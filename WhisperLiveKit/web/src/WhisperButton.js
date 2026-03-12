@@ -1,63 +1,52 @@
 /**
- * Button Transcription API
+ * WhisperButton - 按钮模式语音转录客户端
  * 
- * 基于官方示例 live_transcription.js 封装的编程接口
- * 提供简单的按钮控制转录功能，与官方示例完全兼容
+ * @description 用于按钮模式的语音转录功能，支持实时语音识别和转录
  * 
- * 使用示例：
- * 
- * // 创建客户端
- * const client = new ButtonTranscriptionAPI({
+ * @example
+ * const client = new WhisperButton({
  *   serverUrl: 'ws://localhost:8000',
- *   language: 'zh',
- *   diarization: true,
- *   microphoneId: null // 使用默认麦克风
+ *   language: 'zh'
  * });
  * 
- * // 设置回调
  * client.onresult = (result) => {
  *   console.log('转录结果:', result.text);
  * };
  * 
- * client.onerror = (error) => {
- *   console.error('错误:', error.message);
- * };
- * 
- * client.onstatuschange = (status) => {
- *   console.log('状态变化:', status.state, status.message);
- * };
- * 
- * // 开始转录
  * await client.start();
- * 
- * // 停止转录
- * client.stop();
  */
 
-class ButtonTranscriptionAPI {
+class WhisperButton {
   /**
    * 创建按钮转录客户端
    * @param {Object} options - 配置选项
-   * @param {string} options.serverUrl - WebSocket服务器地址，默认 'ws://localhost:8000'
-   * @param {string} options.language - 语言代码，如 'zh', 'en'，默认自动检测
-   * @param {boolean} options.diarization - 是否启用说话人分离，默认 true
-   * @param {string} options.microphoneId - 麦克风设备ID，默认使用系统默认麦克风
-   * @param {boolean} options.autoStart - 连接后自动开始录音，默认 true
+   * @param {string} [options.serverUrl='ws://localhost:8000'] - WebSocket服务器地址
+   * @param {string} [options.language=null] - 语言代码，如 'zh', 'en'，默认自动检测
+   * @param {string} [options.microphoneId=null] - 麦克风设备ID
+   * @param {boolean} [options.autoStart=true] - 连接后自动开始录音
+   * @param {string} [options.logLevel='info'] - 日志级别: debug, info, warn, error
+   * @param {Function} [options.logHandler=null] - 自定义日志处理器
    */
   constructor(options = {}) {
+    // 日志系统
+    this.logger = new Logger({
+      level: options.logLevel || 'info',
+      handler: options.logHandler,
+      prefix: 'WhisperButton'
+    });
+
     // 配置选项
     this.serverUrl = options.serverUrl || this._detectServerUrl();
     this.language = options.language || null;
-    this.diarization = options.diarization !== false;
     this.microphoneId = options.microphoneId || null;
     this.autoStart = options.autoStart !== false;
-    
+
     // 状态变量
     this.isRecording = false;
     this.isConnected = false;
     this.isProcessing = false;
-    this.currentStatus = 'idle'; // idle, connecting, ready, recording, processing, error
-    
+    this.currentStatus = 'idle';
+
     // WebSocket和音频资源
     this.websocket = null;
     this.audioContext = null;
@@ -66,40 +55,40 @@ class ButtonTranscriptionAPI {
     this.workletNode = null;
     this.recorder = null;
     this.recorderWorker = null;
-    
-    // 计时和UI相关
+
+    // 计时相关
     this.startTime = null;
     this.timerInterval = null;
-    this.animationFrame = null;
     this.lastReceivedData = null;
-    this.lastSignature = null;
-    
+
     // 配置相关
-    this.serverUseAudioWorklet = null;
     this.configReadyResolve = null;
     this.configReady = new Promise((resolve) => {
       this.configReadyResolve = resolve;
     });
-    
+
+    // 服务器配置，由服务器在config消息中指定
+    this.serverUseAudioWorklet = null;
+
     // 回调函数
-    this.onresult = null;          // 收到转录结果时调用
-    this.onpartial = null;         // 收到临时结果时调用  
-    this.onerror = null;           // 发生错误时调用
-    this.onconnect = null;         // 连接成功时调用
-    this.ondisconnect = null;      // 断开连接时调用
-    this.onready = null;           // 服务器准备就绪时调用
-    this.oncompletetion = null;    // 转录完成时调用
-    this.onstatuschange = null;    // 状态变化时调用
-    
-    // 内部状态跟踪
+    this.onresult = null;
+    this.onpartial = null;
+    this.onerror = null;
+    this.onconnect = null;
+    this.ondisconnect = null;
+    this.onready = null;
+    this.oncompletetion = null;
+    this.onstatuschange = null;
+
+    // 内部状态
     this._audioSource = null;
     this._shouldSendAudio = false;
     this._userClosing = false;
     this._waitingForStop = false;
-    this._availableMicrophones = [];
-    this._selectedMicrophoneId = null;
+
+    this.logger.info('WhisperButton 初始化完成', { serverUrl: this.serverUrl });
   }
-  
+
   /**
    * 自动检测服务器地址
    * @private
@@ -113,95 +102,105 @@ class ButtonTranscriptionAPI {
     }
     return 'ws://localhost:8000';
   }
-  
+
+  /**
+   * 更新状态
+   * @private
+   */
+  _updateStatus(state, message) {
+    const previousState = this.currentStatus;
+    this.currentStatus = state;
+    
+    this.logger.info(`状态变化: ${previousState} -> ${state}`, { message });
+
+    if (this.onstatuschange && previousState !== state) {
+      this.onstatuschange({
+        previous: previousState,
+        current: state,
+        message: message
+      });
+    }
+  }
+
   /**
    * 开始转录
    * @returns {Promise<void>}
+   * @throws {WhisperError} 如果已经在录音中或处于错误状态
    */
   async start() {
     if (this.isRecording) {
-      throw new Error('已经在录音中');
+      const error = new WhisperError('已经在录音中', ErrorCodes.ALREADY_RECORDING);
+      this.logger.error(error.message);
+      throw error;
     }
-    
+
     if (this.currentStatus === 'error') {
-      throw new Error('客户端处于错误状态，请重新初始化');
+      const error = new WhisperError('客户端处于错误状态，请重新初始化', ErrorCodes.INVALID_CONFIG);
+      this.logger.error(error.message);
+      throw error;
     }
-    
+
     try {
+      this.logger.info('正在启动转录...');
       this._updateStatus('connecting', '正在连接服务器...');
-      
-      // 连接WebSocket
+
       await this._connectWebSocket();
-      
-      // 等待服务器配置
       await this.configReady;
-      
+
       this._updateStatus('ready', '服务器准备就绪');
-      
-      // 开始录音
       await this._startRecording();
-      
+
       this._updateStatus('recording', '正在录音...');
       this.isRecording = true;
       
+      this.logger.info('转录已启动');
+
     } catch (error) {
       this._updateStatus('error', `启动失败: ${error.message}`);
       this._cleanupResources();
+      
+      this.logger.error('启动失败', error);
+      
       if (this.onerror) {
         this.onerror(error);
       }
       throw error;
     }
   }
-  
+
   /**
    * 停止转录
+   * @returns {void}
    */
   stop() {
     if (!this.isRecording) {
       return;
     }
-    
+
+    this.logger.info('正在停止转录...');
     this._updateStatus('processing', '正在处理音频...');
     this.isRecording = false;
     this._shouldSendAudio = false;
     this._userClosing = true;
     this._waitingForStop = true;
-    
-    // 发送空数据包表示结束
+
     if (this.websocket && this.websocket.readyState === WebSocket.OPEN) {
       const emptyBlob = new Blob([], { type: 'audio/webm' });
       this.websocket.send(emptyBlob);
     }
-    
-    // 停止录音设备
+
     this._stopRecording();
-    
-    // 注意：不立即关闭WebSocket，等待服务器发送 ready_to_stop 消息
   }
-  
-  /**
-   * 切换录音状态
-   * @returns {Promise<void>}
-   */
-  async toggle() {
-    if (this.isRecording) {
-      this.stop();
-    } else {
-      await this.start();
-    }
-  }
-  
+
   /**
    * 获取可用的麦克风列表
    * @returns {Promise<Array<{deviceId: string, label: string}>>}
    */
   static async getMicrophones() {
     try {
-      // 先请求权限
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       stream.getTracks().forEach(track => track.stop());
-      
+
       const devices = await navigator.mediaDevices.enumerateDevices();
       return devices
         .filter(device => device.kind === 'audioinput')
@@ -210,71 +209,70 @@ class ButtonTranscriptionAPI {
           label: device.label || `Microphone ${device.deviceId.slice(0, 8)}...`
         }));
     } catch (error) {
-      throw new Error(`获取麦克风失败: ${error.message}`);
+      const err = new WhisperError(`获取麦克风失败: ${error.message}`, ErrorCodes.MICROPHONE_ACCESS_DENIED);
+      this.logger.error(err.message, error);
+      throw err;
     }
   }
-  
+
   /**
-   * 设置麦克风设备
-   * @param {string} deviceId - 麦克风设备ID
+   * 获取音频分析器（用于波形可视化）
+   * @returns {AnalyserNode|null}
    */
-  setMicrophone(deviceId) {
-    this.microphoneId = deviceId;
-    this._selectedMicrophoneId = deviceId;
-    
-    // 如果正在录音，需要重新启动
-    if (this.isRecording) {
-      this._updateStatus('connecting', '正在切换麦克风...');
-      this.stop();
-      setTimeout(() => {
-        this.start().catch(error => {
-          if (this.onerror) this.onerror(error);
-        });
-      }, 1000);
-    }
+  getAnalyser() {
+    return this.analyser;
   }
-  
+
   /**
    * 连接WebSocket服务器
    * @private
    */
   async _connectWebSocket() {
     return new Promise((resolve, reject) => {
-      const wsUrl = `${this.serverUrl}/asr`;
-      
+      // 确保使用 ws 协议
+      const wsBaseUrl = this.serverUrl.replace(/^http/, 'ws');
+      const wsUrl = `${wsBaseUrl}/asr`;
+      this.logger.debug(`连接WebSocket: ${wsUrl}`);
+
       try {
         this.websocket = new WebSocket(wsUrl);
       } catch (error) {
-        reject(new Error(`创建WebSocket失败: ${error.message}`));
+        const err = new WhisperError(`创建WebSocket失败: ${error.message}`, ErrorCodes.WEBSOCKET_ERROR);
+        this.logger.error(err.message, error);
+        reject(err);
         return;
       }
-      
+
       this.websocket.onopen = () => {
         this.isConnected = true;
         this._updateStatus('connected', '已连接服务器');
+        this.logger.info('WebSocket已连接');
         if (this.onconnect) this.onconnect();
         resolve();
       };
-      
+
       this.websocket.onclose = () => {
         this.isConnected = false;
         this._userClosing = false;
         this._waitingForStop = false;
         this._cleanupResources();
+        this.logger.info('WebSocket已断开');
         if (this.ondisconnect) this.ondisconnect();
         this._updateStatus('idle', '已断开连接');
       };
-      
+
       this.websocket.onerror = () => {
-        reject(new Error('WebSocket连接错误'));
+        const err = new WhisperError('WebSocket连接错误', ErrorCodes.WEBSOCKET_ERROR);
+        this.logger.error(err.message);
+        reject(err);
       };
-      
+
       this.websocket.onmessage = (event) => {
         this._handleWebSocketMessage(event);
       };
     });
   }
-  
+
   /**
    * 处理WebSocket消息
    * @private
@@ -283,49 +281,65 @@ class ButtonTranscriptionAPI {
     try {
       const data = JSON.parse(event.data);
       
-      // 处理配置消息
       if (data.type === 'config') {
+        // 保存服务器配置，用于决定使用哪种音频传输方式
         this.serverUseAudioWorklet = !!data.useAudioWorklet;
+        
         if (this.configReadyResolve) {
           this.configReadyResolve();
           this.configReadyResolve = null;
         }
+        this.logger.debug('收到服务器配置', data);
         if (this.onready) this.onready(data);
         return;
       }
-      
-      // 处理完成消息
+
       if (data.type === 'ready_to_stop') {
+        console.log('WhisperButton 收到 ready_to_stop！', data);
         this._waitingForStop = false;
         this._userClosing = false;
         this._cleanupResources();
         if (this.websocket) {
           this.websocket.close();
         }
-        if (this.oncompletetion) this.oncompletetion(data);
+        this.logger.info('转录完成');
+        console.log('WhisperButton oncompletetion=', this.oncompletetion, 'this=', this);
+        if (this.oncompletetion) {
+          console.log('调用 oncompletetion...');
+          this.oncompletetion(data);
+        } else {
+          console.warn('WhisperButton.oncompletetion 回调未设置！');
+        }
         this._updateStatus('idle', '转录完成');
         return;
       }
-      
+
+      this.logger.debug('收到原始转录数据:', data);
       this.lastReceivedData = data;
-      
-      // 提取转录结果
       const result = this._extractTranscriptionResult(data);
-      
-      // 调用回调函数
+
+      if (result.text || (result.lines && result.lines.length > 0)) {
+        this.logger.debug('转录结果:', {
+          text: result.text,
+          lines: result.lines,
+          isPartial: result.isPartial,
+          buffer_transcription: result.buffer_transcription
+        });
+      }
+
       if (result.isPartial && this.onpartial) {
         this.onpartial(result);
       }
-      
+
       if (this.onresult) {
         this.onresult(result);
       }
-      
+
     } catch (error) {
-      console.error('处理WebSocket消息失败:', error);
+      this.logger.error('处理WebSocket消息失败', error);
     }
   }
-  
+
   /**
    * 从服务器数据中提取转录结果
    * @private
@@ -335,11 +349,9 @@ class ButtonTranscriptionAPI {
       lines = [],
       buffer_transcription = '',
       buffer_diarization = '',
-      buffer_translation = '',
-      remaining_time_transcription = 0,
-      remaining_time_diarization = 0,
       status = 'active_transcription',
-    } = data;
+      detected_language = null
+    } = data || {};
     
     let text = '';
     
@@ -355,59 +367,81 @@ class ButtonTranscriptionAPI {
       }
     }
     
-    // 处理lines中的数字字段，确保start和end是数字类型
-    const processedLines = lines.map(line => {
-      if (!line) return line;
-      
-      const processedLine = { ...line };
-      
-      // 转换start和end为数字
-      if (line.start !== undefined) {
-        processedLine.start = parseFloat(line.start);
-        if (isNaN(processedLine.start)) {
-          processedLine.start = line.start; // 如果转换失败，保留原始值
-        }
-      }
-      
-      if (line.end !== undefined) {
-        processedLine.end = parseFloat(line.end);
-        if (isNaN(processedLine.end)) {
-          processedLine.end = line.end; // 如果转换失败，保留原始值
-        }
-      }
-      
-      // 确保speaker是数字（如果存在）
-      if (line.speaker !== undefined) {
-        const speakerNum = parseFloat(line.speaker);
-        if (!isNaN(speakerNum)) {
-          processedLine.speaker = speakerNum;
-        }
-      }
-      
-      return processedLine;
-    });
-    
-    // 确保remainingTime是数字
-    const remainingTime = parseFloat(remaining_time_transcription);
+    // 处理lines数组
+    const processedLines = lines.map(line => this._processLine(line));
     
     return {
       text,
       lines: processedLines,
+      buffer_transcription,
       isPartial: !!buffer_transcription, // 有缓冲区转录就是中间结果
       speaker: buffer_diarization || null,
-      language: data.detected_language || null,
+      language: detected_language,
       status,
-      remainingTime: isNaN(remainingTime) ? 0 : remainingTime
+      remainingTime: 0 // 为了兼容性
     };
   }
-  
+
+  /**
+   * 处理单行转录数据
+   * @private
+   */
+  _processLine(line) {
+    const processedLine = {};
+    
+    if (line.text !== undefined) {
+      processedLine.text = line.text;
+    }
+    
+    if (line.start !== undefined) {
+      processedLine.start = parseFloat(line.start);
+      if (isNaN(processedLine.start)) {
+        processedLine.start = line.start;
+      }
+    }
+    
+    if (line.end !== undefined) {
+      processedLine.end = parseFloat(line.end);
+      if (isNaN(processedLine.end)) {
+        processedLine.end = line.end;
+      }
+    }
+    
+    if (line.speaker !== undefined) {
+      const speakerNum = parseFloat(line.speaker);
+      if (!isNaN(speakerNum)) {
+        processedLine.speaker = speakerNum;
+      }
+    }
+    
+    if (line.detected_language !== undefined) {
+      processedLine.detected_language = line.detected_language;
+    }
+    
+    return processedLine;
+  }
+
+  /**
+   * 检测浏览器是否支持AudioWorklet
+   * @private
+   */
+  _detectAudioWorkletSupport() {
+    try {
+      const testCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const supported = !!testCtx.audioWorklet;
+      testCtx.close();
+      return supported;
+    } catch (e) {
+      return false;
+    }
+  }
+
   /**
    * 开始录音
    * @private
    */
   async _startRecording() {
     try {
-      // 获取麦克风权限
       const constraints = {
         audio: {
           deviceId: this.microphoneId ? { exact: this.microphoneId } : undefined,
@@ -417,81 +451,93 @@ class ButtonTranscriptionAPI {
           noiseSuppression: true
         }
       };
-      
+
+      this.logger.debug('请求麦克风权限', constraints);
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      
-      // 创建音频上下文
+
       this.audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
       this.analyser = this.audioContext.createAnalyser();
       this.analyser.fftSize = 256;
       this._audioSource = this.audioContext.createMediaStreamSource(stream);
       this._audioSource.connect(this.analyser);
+
+      // 根据服务器配置决定使用AudioWorklet还是MediaRecorder
+      // 如果服务器需要PCM输入，使用AudioWorklet；否则使用MediaRecorder
+      // 如果服务器未指定配置，检测浏览器是否支持AudioWorklet作为后备
+      const useWorklet = this.serverUseAudioWorklet ?? this._detectAudioWorkletSupport();
       
-      // 根据服务器配置选择音频处理方式
-      if (this.serverUseAudioWorklet) {
-        await this._setupAudioWorklet();
+      if (useWorklet) {
+        try {
+          await this._setupAudioWorklet();
+        } catch (error) {
+          this.logger.warn(`AudioWorklet设置失败，降级到MediaRecorder: ${error.message}`);
+          this._setupMediaRecorder(stream);
+        }
       } else {
         this._setupMediaRecorder(stream);
       }
-      
+
       this._shouldSendAudio = true;
       this.startTime = Date.now();
-      
-      // 开始计时
-      this.timerInterval = setInterval(() => {
-        // 可以在这里更新UI计时器
-      }, 1000);
-      
+
+      this.logger.info('录音已启动');
+
     } catch (error) {
-      throw new Error(`启动录音失败: ${error.message}`);
+      const err = new WhisperError(`启动录音失败: ${error.message}`, ErrorCodes.AUDIO_PROCESSING_ERROR);
+      this.logger.error(err.message, error);
+      throw err;
     }
   }
-  
+
   /**
-   * 设置AudioWorklet（PCM模式）
+   * 设置AudioWorklet
    * @private
    */
   async _setupAudioWorklet() {
     if (!this.audioContext.audioWorklet) {
-      throw new Error('浏览器不支持AudioWorklet');
+      throw new WhisperError('浏览器不支持AudioWorklet', ErrorCodes.AUDIO_PROCESSING_ERROR);
     }
-    
-    const workletCode = `
-      class PCMProcessor extends AudioWorkletProcessor {
-        process(inputs, outputs, parameters) {
-          const input = inputs[0];
-          if (input && input[0]) {
-            const floatData = input[0];
-            const intData = new Int16Array(floatData.length);
-            for (let i = 0; i < floatData.length; i++) {
-              intData[i] = Math.max(-32768, Math.min(32767, floatData[i] * 32767));
-            }
-            this.port.postMessage(intData.buffer, [intData.buffer]);
-          }
-          return true;
-        }
+
+    // 加载 pcm_worklet.js
+    await this.audioContext.audioWorklet.addModule('pcm_worklet.js');
+
+    // 创建 AudioWorkletNode
+    this.workletNode = new AudioWorkletNode(this.audioContext, 'pcm-forwarder');
+
+    // 创建 recorder_worker.js 用于处理音频（重采样和转换）
+    this.recorderWorker = new Worker('recorder_worker.js');
+    this.recorderWorker.postMessage({
+      command: 'init',
+      config: {
+        sampleRate: this.audioContext.sampleRate,
+        targetSampleRate: 16000
       }
-      registerProcessor('pcm-processor', PCMProcessor);
-    `;
-    
-    const blob = new Blob([workletCode], { type: 'application/javascript' });
-    const url = URL.createObjectURL(blob);
-    
-    await this.audioContext.audioWorklet.addModule(url);
-    
-    this.workletNode = new AudioWorkletNode(this.audioContext, 'pcm-processor');
-    this.workletNode.port.onmessage = (event) => {
+    });
+
+    // worker 处理完成的音频数据，发送给服务器
+    this.recorderWorker.onmessage = (e) => {
       if (this._shouldSendAudio && this.websocket?.readyState === WebSocket.OPEN) {
-        this.websocket.send(event.data);
+        this.websocket.send(e.data.buffer);
       }
     };
-    
+
+    // AudioWorklet 收到音频后发送给 worker 处理
+    this.workletNode.port.onmessage = (e) => {
+      const data = e.data;
+      const ab = data instanceof ArrayBuffer ? data : data.buffer;
+      this.recorderWorker.postMessage({
+        command: 'record',
+        buffer: ab
+      }, [ab]);
+    };
+
     this._audioSource.connect(this.workletNode);
-    this.workletNode.connect(this.audioContext.destination);
+    
+    this.logger.debug('AudioWorklet已设置');
   }
-  
+
   /**
-   * 设置MediaRecorder（WebM模式）
+   * 设置MediaRecorder
    * @private
    */
   _setupMediaRecorder(stream) {
@@ -500,7 +546,7 @@ class ButtonTranscriptionAPI {
     } catch (e) {
       this.recorder = new MediaRecorder(stream);
     }
-    
+
     this.recorder.ondataavailable = (event) => {
       if (this._shouldSendAudio && this.websocket?.readyState === WebSocket.OPEN) {
         if (event.data && event.data.size > 0) {
@@ -508,110 +554,69 @@ class ButtonTranscriptionAPI {
         }
       }
     };
-    
-    this.recorder.start(100); // 100ms的块大小
+
+    this.recorder.start(100);
+    this.logger.debug('MediaRecorder已设置');
   }
-  
+
   /**
    * 停止录音
    * @private
    */
   _stopRecording() {
     if (this.recorder) {
-      try {
-        this.recorder.stop();
-      } catch (e) {
-        // 忽略错误
-      }
+      try { this.recorder.stop(); } catch (e) {}
       this.recorder = null;
     }
-    
+
     if (this.recorderWorker) {
-      this.recorderWorker.terminate();
+      try { this.recorderWorker.terminate(); } catch (e) {}
       this.recorderWorker = null;
     }
-    
+
     if (this.workletNode) {
       try {
         this.workletNode.port.onmessage = null;
         this.workletNode.disconnect();
-      } catch (e) {
-        // 忽略错误
-      }
+      } catch (e) {}
       this.workletNode = null;
     }
-    
+
     if (this._audioSource) {
-      try {
-        this._audioSource.disconnect();
-      } catch (e) {
-        // 忽略错误
-      }
+      try { this._audioSource.disconnect(); } catch (e) {}
       this._audioSource = null;
     }
-    
+
     if (this.analyser) {
       this.analyser = null;
     }
-    
+
     if (this.audioContext && this.audioContext.state !== 'closed') {
       this.audioContext.close().catch(() => {});
       this.audioContext = null;
     }
-    
+
     if (this.timerInterval) {
       clearInterval(this.timerInterval);
       this.timerInterval = null;
     }
-    
-    if (this.animationFrame) {
-      cancelAnimationFrame(this.animationFrame);
-      this.animationFrame = null;
-    }
-    
-    this.startTime = null;
+
+    this.logger.info('录音已停止');
   }
-  
+
   /**
-   * 清理所有资源
+   * 清理资源
    * @private
    */
   _cleanupResources() {
     this._stopRecording();
-    
-    if (this.websocket) {
-      this.websocket.close();
-      this.websocket = null;
-    }
-    
-    this.isRecording = false;
-    this.isConnected = false;
-    this._shouldSendAudio = false;
-    this._userClosing = false;
-    this._waitingForStop = false;
   }
-  
+
   /**
-   * 更新状态
-   * @private
-   */
-  _updateStatus(state, message) {
-    const previousState = this.currentStatus;
-    this.currentStatus = state;
-    
-    if (this.onstatuschange && previousState !== state) {
-      this.onstatuschange({
-        previous: previousState,
-        current: state,
-        message: message
-      });
-    }
-  }
-  
-  /**
-   * 销毁客户端，释放所有资源
+   * 销毁客户端
    */
   destroy() {
+    this.logger.info('正在销毁客户端');
     this._cleanupResources();
     this._updateStatus('idle', '客户端已销毁');
   }
@@ -619,5 +624,10 @@ class ButtonTranscriptionAPI {
 
 // 全局导出
 if (typeof window !== 'undefined') {
-  window.ButtonTranscriptionAPI = ButtonTranscriptionAPI;
+  window.WhisperButton = WhisperButton;
+}
+
+// 模块导出
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = WhisperButton;
 }

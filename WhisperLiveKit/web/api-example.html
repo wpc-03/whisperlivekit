@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Button Transcription API 示例</title>
+    <title>Transcription API 示例</title>
     <style>
         * {
             box-sizing: border-box;
@@ -179,6 +179,37 @@
             gap: 15px;
             margin-bottom: 25px;
             flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .recording-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .wave-container {
+            width: 100px;
+            height: 40px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .wave-container canvas {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .timer {
+            font-size: 14px;
+            font-weight: 600;
+            color: #666;
+            min-width: 50px;
+        }
+        
+        .timer.recording {
+            color: #e74c3c;
         }
         
         .transcript-box {
@@ -220,6 +251,33 @@
             font-size: 15px;
         }
         
+        /* 已确认文本：正常黑色 */
+        .transcript-line .content.confirmed {
+            color: #333;
+        }
+        
+        /* 未确认文本：浅黑色 */
+        .transcript-line .content.unconfirmed {
+            color: #999;
+            font-style: italic;
+        }
+        
+        /* 未确认buffer文本（紧跟已确认文本） */
+        .buffer_transcription {
+            color: #999;
+            font-style: italic;
+        }
+        
+        .transcript-line .content .meta {
+            margin-left: 10px;
+            font-size: 11px;
+            color: #999;
+        }
+        
+        .transcript-line .content .speaker-badge {
+            margin-right: 5px;
+        }
+        
         .transcript-line .time {
             font-size: 12px;
             color: #999;
@@ -234,16 +292,33 @@
         
         .speaker-badge {
             display: inline-block;
-            width: 24px;
-            height: 24px;
-            line-height: 24px;
+            min-width: 20px;
+            height: 20px;
+            line-height: 20px;
             text-align: center;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            border-radius: 50%;
-            font-size: 12px;
+            border-radius: 4px;
+            font-size: 11px;
             font-weight: bold;
             margin-right: 5px;
+            padding: 0 5px;
+        }
+        
+        .language-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            background: #f0f0f0;
+            border-radius: 3px;
+            font-size: 11px;
+            color: #666;
+            margin-left: 8px;
+        }
+        
+        .time-info {
+            font-size: 11px;
+            color: #999;
+            margin-left: 8px;
         }
         
         .status-indicator {
@@ -347,8 +422,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🎤 Button Transcription API 示例</h1>
-            <p>基于官方示例封装的编程接口，提供简单的按钮控制转录功能</p>
+            <h1>🎤Transcription API 示例</h1>
         </div>
         
         <div class="content">
@@ -391,11 +465,11 @@
                     <small style="color: #666; display: block; margin-top: 5px;">阈值越高，误唤醒越少但灵敏度越低</small>
                 </div>
                 
-                <div class="config-group">
+                <!-- <div class="config-group">
                     <label class="config-label">
                         <input type="checkbox" id="diarization" checked> 启用说话人分离
                     </label>
-                </div>
+                </div> -->
             </div>
             
             <!-- 状态显示 -->
@@ -410,15 +484,18 @@
             
             <!-- 控制按钮 -->
             <div class="controls">
-                <button id="startBtn" class="btn btn-primary">
-                    <span>▶️ 开始录音</span>
-                </button>
-                <button id="stopBtn" class="btn btn-danger" disabled>
-                    <span>⏹️ 停止录音</span>
-                </button>
-                <button id="toggleBtn" class="btn btn-success">
-                    <span>🔄 切换状态</span>
-                </button>
+                <div class="recording-control">
+                    <button id="startBtn" class="btn btn-primary">
+                        <span>▶️ 开始录音</span>
+                    </button>
+                    <button id="stopBtn" class="btn btn-danger" disabled>
+                        <span>⏹️ 停止录音</span>
+                    </button>
+                    <div class="wave-container">
+                        <canvas id="waveCanvas"></canvas>
+                    </div>
+                    <div class="timer" id="timer">00:00</div>
+                </div>
                 <button id="clearBtn" class="btn">
                     <span>🗑️ 清空结果</span>
                 </button>
@@ -474,7 +551,7 @@ client.stop();</pre>
     </div>
     
     <!-- 引入API -->
-    <script src="api-transcription.js"></script>
+    <script src="api-transcription.js"></script> 
     <script src="hotword-detection-api.js"></script>
     
     <script>
@@ -482,8 +559,124 @@ client.stop();</pre>
         let client = null;
         let hotwordClient = null;
         
+        // 波形可视化变量
+        let waveCanvas = null;
+        let waveCtx = null;
+        let analyser = null;
+        let animationFrame = null;
+        let startTime = null;
+        let timerInterval = null;
+        
+        // 初始化波形Canvas
+        function initWaveCanvas() {
+            waveCanvas = document.getElementById('waveCanvas');
+            if (waveCanvas) {
+                waveCtx = waveCanvas.getContext('2d');
+                waveCanvas.width = 100;
+                waveCanvas.height = 40;
+            }
+        }
+        
+        // 绘制波形
+        function drawWaveform() {
+            if (!analyser || !waveCtx || !waveCanvas) return;
+            
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            analyser.getByteTimeDomainData(dataArray);
+            
+            waveCtx.fillStyle = '#f0f0f0';
+            waveCtx.fillRect(0, 0, waveCanvas.width, waveCanvas.height);
+            
+            waveCtx.lineWidth = 2;
+            waveCtx.strokeStyle = '#667eea';
+            waveCtx.beginPath();
+            
+            const sliceWidth = waveCanvas.width / bufferLength;
+            let x = 0;
+            
+            for (let i = 0; i < bufferLength; i++) {
+                const v = dataArray[i] / 128.0;
+                const y = v * waveCanvas.height / 2;
+                
+                if (i === 0) {
+                    waveCtx.moveTo(x, y);
+                } else {
+                    waveCtx.lineTo(x, y);
+                }
+                
+                x += sliceWidth;
+            }
+            
+            waveCtx.lineTo(waveCanvas.width, waveCanvas.height / 2);
+            waveCtx.stroke();
+            
+            animationFrame = requestAnimationFrame(drawWaveform);
+        }
+        
+        // 更新计时器
+        function updateTimer() {
+            if (!startTime) return;
+            
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
+            const seconds = (elapsed % 60).toString().padStart(2, '0');
+            
+            const timerEl = document.getElementById('timer');
+            if (timerEl) {
+                timerEl.textContent = `${minutes}:${seconds}`;
+                timerEl.classList.add('recording');
+            }
+        }
+        
+        // 开始波形和计时器
+        function startWaveAndTimer(audioAnalyser) {
+            analyser = audioAnalyser;
+            startTime = Date.now();
+            
+            const timerEl = document.getElementById('timer');
+            if (timerEl) {
+                timerEl.textContent = '00:00';
+                timerEl.classList.add('recording');
+            }
+            
+            timerInterval = setInterval(updateTimer, 1000);
+            drawWaveform();
+        }
+        
+        // 停止波形和计时器
+        function stopWaveAndTimer() {
+            if (animationFrame) {
+                cancelAnimationFrame(animationFrame);
+                animationFrame = null;
+            }
+            
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            
+            analyser = null;
+            startTime = null;
+            
+            const timerEl = document.getElementById('timer');
+            if (timerEl) {
+                timerEl.textContent = '00:00';
+                timerEl.classList.remove('recording');
+            }
+            
+            // 清空波形
+            if (waveCtx && waveCanvas) {
+                waveCtx.fillStyle = '#f0f0f0';
+                waveCtx.fillRect(0, 0, waveCanvas.width, waveCanvas.height);
+            }
+        }
+        
         // 初始化
         document.addEventListener('DOMContentLoaded', async () => {
+            // 初始化波形Canvas
+            initWaveCanvas();
+            
             // 加载麦克风列表
             try {
                 await loadMicrophones();
@@ -495,21 +688,26 @@ client.stop();</pre>
             // 绑定按钮事件
             document.getElementById('startBtn').addEventListener('click', startTranscription);
             document.getElementById('stopBtn').addEventListener('click', stopTranscription);
-            document.getElementById('toggleBtn').addEventListener('click', toggleTranscription);
             document.getElementById('clearBtn').addEventListener('click', clearTranscript);
             
             // 设置转录模式切换事件监听器
             const modeSelect = document.getElementById('transcriptionMode');
             const thresholdGroup = document.getElementById('hotwordThresholdGroup');
             
-            modeSelect.addEventListener('change', function() {
+            modeSelect.addEventListener('change', async function() {
                 if (this.value === 'hotword') {
                     thresholdGroup.style.display = 'block';
                     // 更新状态显示为唤醒词模式
-                    updateStatus('唤醒词模式：正在监听唤醒词...', 'info');
+                    updateStatus('唤醒词模式：正在启动唤醒词检测...', 'info');
                     updateStateIndicator('hotword', 'HOTWORD MODE');
+                    // 自动启动唤醒词检测
+                    await startTranscription();
                 } else {
                     thresholdGroup.style.display = 'none';
+                    // 停止唤醒词检测
+                    if (hotwordClient && hotwordClient.isListening) {
+                        stopTranscription();
+                    }
                     // 恢复按钮模式状态
                     updateStatus('准备就绪，点击"开始录音"按钮开始转录', 'info');
                     updateStateIndicator('idle', 'IDLE');
@@ -553,7 +751,7 @@ client.stop();</pre>
             element.innerHTML = `<span>状态: ${text || state.toUpperCase()}</span>`;
         }
         
-        // 渲染转录结果（参照官方示例的单输出框更新方式）
+        // 渲染转录结果（实时动态修正模式 - 单一对话框）
         let lastTranscriptSignature = null;
         
         function renderTranscript(result) {
@@ -582,76 +780,73 @@ client.stop();</pre>
             
             let transcriptHtml = '';
             const lines = result.lines || [];
-            const hasPartialText = result.isPartial && result.text;
+            const bufferText = result.text || ''; // 未确认的文本
             
-            // 显示所有已完成的句子
+            // 单一对话框模式：在一个框内显示已确认+未确认文本
+            transcriptHtml = `<div class="transcript-line">`;
+            
+            // 显示已确认的句子
+            let hasLines = false;
+            let lastConfirmedIndex = -1;
             lines.forEach((line, index) => {
                 if (line.text && line.text.trim()) {
-                    // 构建时间信息
-                    let timeInfo = '';
-                    // 确保 start 和 end 是数字类型
-                    const start = parseFloat(line.start);
-                    const end = parseFloat(line.end);
-                    if (!isNaN(start) && !isNaN(end)) {
-                        timeInfo = `${start.toFixed(1)}-${end.toFixed(1)}s`;
-                    } else if (line.start !== undefined && line.end !== undefined) {
-                        // 如果转换失败但值存在，直接显示原始值
-                        timeInfo = `${line.start}-${line.end}`;
-                    }
-                    
-                    // 构建说话人信息
-                    let speakerBadge = '';
-                    if (line.speaker !== undefined && line.speaker > 0) {
-                        speakerBadge = `<span class="speaker-badge">${line.speaker}</span>`;
-                    }
-                    
-                    // 构建语言标签（如果检测到语言）
-                    let languageLabel = '';
-                    if (line.detected_language) {
-                        languageLabel = `<span style="font-size: 11px; color: #666; margin-left: 8px; padding: 2px 6px; background: #f0f0f0; border-radius: 3px;">${line.detected_language}</span>`;
-                    }
-                    
-                    transcriptHtml += `<div class="transcript-line${index === lines.length - 1 && !hasPartialText ? ' current-line' : ''}">`;
-                    
-                    // 第一行：说话人徽章和时间信息
-                    if (speakerBadge || timeInfo) {
-                        transcriptHtml += `<div class="label">`;
-                        if (speakerBadge) transcriptHtml += speakerBadge;
-                        if (timeInfo) transcriptHtml += `<span style="font-size: 11px; color: #666; margin-left: 5px;">${timeInfo}</span>`;
-                        if (languageLabel) transcriptHtml += languageLabel;
-                        transcriptHtml += `</div>`;
-                    }
-                    
-                    // 第二行：转录文本
-                    transcriptHtml += `<div class="content">${line.text}</div>`;
-                    transcriptHtml += `</div>`;
+                    hasLines = true;
+                    lastConfirmedIndex = index;
                 }
             });
             
-            // 如果有缓冲区文本（中间结果），显示为正在识别的文本
-            if (hasPartialText) {
-                // 如果已经有完成的句子，添加一个当前行指示器
-                if (lines.length > 0) {
-                    transcriptHtml += `<div class="transcript-line partial">`;
-                    transcriptHtml += `<div class="label">🔄 正在识别...</div>`;
-                } else {
-                    // 如果还没有完成的句子，只显示中间结果
-                    transcriptHtml += `<div class="transcript-line partial" style="border-left-color: #2196F3;">`;
-                    transcriptHtml += `<div class="label">🎤 语音识别中...</div>`;
+            // 渲染已确认句子
+            lines.forEach((line, index) => {
+                if (line.text && line.text.trim()) {
+                    // let speakerBadge = '';
+                    // if (line.speaker !== undefined && line.speaker > 0) {
+                    //     speakerBadge = `<span class="speaker-badge">${line.speaker}</span>`;
+                    // }
+                    
+                    // let timeInfo = '';
+                    // const start = parseFloat(line.start);
+                    // const end = parseFloat(line.end);
+                    // if (!isNaN(start) && !isNaN(end)) {
+                    //     timeInfo = `<span class="time-info">${start.toFixed(1)}-${end.toFixed(1)}s</span>`;
+                    // }
+                    
+                    // let languageLabel = '';
+                    // if (line.detected_language) {
+                    //     languageLabel = `<span class="language-badge">${line.detected_language}</span>`;
+                    // }
+                    
+                    // 已确认文本：正常黑色（用span不换行）
+                    transcriptHtml += `<span class="content confirmed">`;
+                    // if (speakerBadge) transcriptHtml += speakerBadge;
+                    transcriptHtml += line.text;
+                    // if (timeInfo || languageLabel) {
+                    //     transcriptHtml += `<span class="meta">`;
+                    //     if (timeInfo) transcriptHtml += timeInfo;
+                    //     if (languageLabel) transcriptHtml += languageLabel;
+                    //     transcriptHtml += `</span>`;
+                    // }
+                    transcriptHtml += `</span>`;
+                    
+                    // 如果不是最后一句已确认文本，添加换行
+                    if (index < lastConfirmedIndex) {
+                        transcriptHtml += `<br>`;
+                    }
                 }
-                
-                transcriptHtml += `<div class="content">${result.text}</div>`;
-                transcriptHtml += `</div>`;
-                
-                // 如果有剩余时间，显示处理状态
-                const remainingTime = parseFloat(result.remainingTime);
-                if (!isNaN(remainingTime) && remainingTime > 0) {
-                    transcriptHtml += `<div style="font-size: 12px; color: #666; text-align: center; padding: 5px 0;">处理延迟: ${remainingTime.toFixed(1)}秒</div>`;
+            });
+            
+            // 显示未确认的文本（紧跟在最后，不换行）
+            if (bufferText) {
+                if (hasLines) {
+                    transcriptHtml += `<span class="buffer_transcription">${bufferText}</span>`;
+                } else {
+                    transcriptHtml += `<span class="buffer_transcription">${bufferText}</span>`;
                 }
             }
             
+            transcriptHtml += `</div>`;
+            
             // 如果没有生成任何内容，显示等待信息
-            if (!transcriptHtml) {
+            if (!transcriptHtml || (lines.length === 0 && !bufferText)) {
                 transcriptHtml = '<p style="color: #999; text-align: center;">正在等待转录结果...</p>';
             }
             
@@ -671,7 +866,9 @@ client.stop();</pre>
             const serverUrl = document.getElementById('serverUrl').value;
             const language = document.getElementById('language').value;
             const microphoneId = document.getElementById('microphone').value;
-            const diarization = document.getElementById('diarization').checked;
+            // const diarization = document.getElementById('diarization').checked;
+            // 禁用说话人识别
+            const diarization = false;
             const transcriptionMode = document.getElementById('transcriptionMode').value;
             const hotwordThreshold = document.getElementById('hotwordThreshold').value;
             
@@ -739,8 +936,7 @@ client.stop();</pre>
                     
                     // 更新按钮状态
                     document.getElementById('startBtn').disabled = true;
-                    document.getElementById('stopBtn').disabled = true;
-                    document.getElementById('toggleBtn').disabled = false;
+                    document.getElementById('stopBtn').disabled = false;
                     
                     // 开始监听唤醒词
                     await hotwordClient.start();
@@ -781,6 +977,18 @@ client.stop();</pre>
                 client.onready = () => {
                     updateStatus('服务器准备就绪', 'success');
                     updateStateIndicator('ready', 'READY');
+                    // 启动波形可视化
+                    setTimeout(() => {
+                        let audioAnalyser = null;
+                        if (client.getAnalyser) {
+                            audioAnalyser = client.getAnalyser();
+                        } else if (client.analyser) {
+                            audioAnalyser = client.analyser;
+                        }
+                        if (audioAnalyser) {
+                            startWaveAndTimer(audioAnalyser);
+                        }
+                    }, 500);
                 };
                 
                 client.onresult = (result) => {
@@ -803,6 +1011,7 @@ client.stop();</pre>
                     updateStatus('错误: ' + error.message, 'error');
                     updateStateIndicator('error', 'ERROR');
                     resetButtons();
+                    stopWaveAndTimer();
                 };
                 
                 client.oncompletetion = () => {
@@ -821,7 +1030,6 @@ client.stop();</pre>
                 // 更新按钮状态
                 document.getElementById('startBtn').disabled = true;
                 document.getElementById('stopBtn').disabled = false;
-                document.getElementById('toggleBtn').disabled = false;
                 
                 // 开始转录
                 await client.start();
@@ -836,6 +1044,9 @@ client.stop();</pre>
         
         // 停止转录
         function stopTranscription() {
+            // 停止波形可视化
+            stopWaveAndTimer();
+            
             // 停止转录客户端
             if (client) {
                 client.stop();
@@ -843,7 +1054,6 @@ client.stop();</pre>
                 updateStateIndicator('processing', 'PROCESSING');
                 
                 document.getElementById('stopBtn').disabled = true;
-                document.getElementById('toggleBtn').disabled = true;
             }
             
             // 停止唤醒词检测客户端
@@ -854,36 +1064,10 @@ client.stop();</pre>
             }
         }
         
-        // 切换转录状态
-        async function toggleTranscription() {
-            const transcriptionMode = document.getElementById('transcriptionMode').value;
-            
-            // 如果是唤醒词模式，切换按钮应该停止唤醒词检测
-            if (transcriptionMode === 'hotword') {
-                if (hotwordClient && hotwordClient.isListening) {
-                    stopTranscription();
-                } else {
-                    await startTranscription();
-                }
-            } else {
-                // 按钮模式
-                if (client) {
-                    if (client.isRecording) {
-                        stopTranscription();
-                    } else {
-                        await startTranscription();
-                    }
-                } else {
-                    await startTranscription();
-                }
-            }
-        }
-        
         // 重置按钮状态
         function resetButtons() {
             document.getElementById('startBtn').disabled = false;
             document.getElementById('stopBtn').disabled = true;
-            document.getElementById('toggleBtn').disabled = false;
         }
         
         // 页面卸载时清理
