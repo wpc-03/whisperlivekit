@@ -3,25 +3,25 @@
 ## 概述
 
 WhisperLiveKit 是一个用于实时语音转录的 JavaScript SDK，支持两种模式：
-- **按钮模式 (WhisperButton)**: 手动控制开始/停止录音
+- **按钮模式 (WhisperAsr)**: 手动控制开始/停止录音
 - **唤醒词模式 (WhisperHotword)**: 通过唤醒词触发转录
 
 ## 安装
 
 ```html
-<script src="src/Logger.js"></script>
-<script src="src/WhisperButton.js"></script>
-<script src="src/WhisperHotword.js"></script>
+<script src="../sdk/Logger.js"></script>
+<script src="../sdk/WhisperAsr.js"></script>
+<script src="../sdk/WhisperHotword.js"></script>
 ```
 
-## WhisperButton 类
+## WhisperAsr 类
 
 按钮模式语音转录客户端
 
 ### 构造函数
 
 ```javascript
-new WhisperButton(options)
+new WhisperAsr(options)
 ```
 
 #### 参数
@@ -75,7 +75,7 @@ client.destroy()
 获取可用的麦克风列表。
 
 ```javascript
-const microphones = await WhisperButton.getMicrophones()
+const microphones = await WhisperAsr.getMicrophones()
 ```
 
 **返回**: `Promise<Array<{deviceId: string, label: string}>>`
@@ -268,19 +268,19 @@ hotword.onhotword = (keyword, data) => {
 
 #### onresult
 
-转录结果回调（与 WhisperButton 相同）
+转录结果回调（与 WhisperAsr 相同）
 
 #### onpartial
 
-中间结果回调（与 WhisperButton 相同）
+中间结果回调（与 WhisperAsr 相同）
 
 #### onstatuschange
 
-状态变化回调（与 WhisperButton 相同）
+状态变化回调（与 WhisperAsr 相同）
 
 #### onerror
 
-错误回调（与 WhisperButton 相同）
+错误回调（与 WhisperAsr 相同）
 
 ---
 
@@ -318,7 +318,7 @@ try {
 ### 配置日志级别
 
 ```javascript
-const client = new WhisperButton({
+const client = new WhisperAsr({
   logLevel: 'debug'  // debug, info, warn, error
 });
 ```
@@ -326,7 +326,7 @@ const client = new WhisperButton({
 ### 自定义日志处理器
 
 ```javascript
-const client = new WhisperButton({
+const client = new WhisperAsr({
   logHandler: (level, message, data) => {
     // 发送到远程日志服务
     fetch('/api/logs', {
@@ -344,10 +344,10 @@ const client = new WhisperButton({
 ### 按钮模式
 
 ```html
-<script src="src/Logger.js"></script>
-<script src="src/WhisperButton.js"></script>
+<script src="../sdk/Logger.js"></script>
+<script src="../sdk/WhisperAsr.js"></script>
 <script>
-  const client = new WhisperButton({
+  const client = new WhisperAsr({
     serverUrl: 'ws://localhost:8000',
     language: 'zh'
   });
@@ -371,9 +371,9 @@ const client = new WhisperButton({
 ### 唤醒词模式
 
 ```html
-<script src="src/Logger.js"></script>
-<script src="src/WhisperButton.js"></script>
-<script src="src/WhisperHotword.js"></script>
+<script src="../sdk/Logger.js"></script>
+<script src="../sdk/WhisperAsr.js"></script>
+<script src="../sdk/WhisperHotword.js"></script>
 <script>
   const hotword = new WhisperHotword({
     serverUrl: 'ws://localhost:8000',

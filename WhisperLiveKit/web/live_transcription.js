@@ -561,11 +561,11 @@ async function startRecording() {
       if (!audioContext.audioWorklet) {
         throw new Error("AudioWorklet is not supported in this browser");
       }
-      await audioContext.audioWorklet.addModule("/web/pcm_worklet.js");
+      await audioContext.audioWorklet.addModule("/web/sdk/pcm_worklet.js");
       workletNode = new AudioWorkletNode(audioContext, "pcm-forwarder", { numberOfInputs: 1, numberOfOutputs: 0, channelCount: 1 });
       microphone.connect(workletNode);
 
-      recorderWorker = new Worker("/web/recorder_worker.js");
+      recorderWorker = new Worker("/web/sdk/recorder_worker.js");
       recorderWorker.postMessage({
         command: "init",
         config: {

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WhisperButton 示例 - 按钮模式语音转录</title>
+    <title>WhisperAsr 示例 - 按钮模式语音转录</title>
     <style>
         * {
             margin: 0;
@@ -188,7 +188,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🎤 WhisperButton 示例</h1>
+            <h1>🎤 WhisperAsr 示例</h1>
             <p>按钮模式语音转录 - 点击开始/停止按钮进行转录</p>
         </div>
         
@@ -232,15 +232,15 @@
         </div>
     </div>
     
-    <script src="src/Logger.js"></script>
-    <script src="src/WhisperButton.js"></script>
+    <script src="Logger.js"></script>
+    <script src="WhisperAsr.js"></script>
     <script>
         let client = null;
         
         // 加载麦克风列表
         async function loadMicrophones() {
             try {
-                const microphones = await WhisperButton.getMicrophones();
+                const microphones = await WhisperAsr.getMicrophones();
                 const select = document.getElementById('microphone');
                 microphones.forEach(mic => {
                     const option = document.createElement('option');
@@ -262,7 +262,6 @@
         let lastTranscriptSignature = null;
         
         function renderTranscript(result) {
-            console.log('[renderTranscript] 调用 result:', JSON.stringify(result));
             const container = document.getElementById('transcript');
             
             // 如果没有结果，显示默认信息
@@ -353,7 +352,7 @@
                 client.destroy();
             }
             
-            client = new WhisperButton({
+            client = new WhisperAsr({
                 serverUrl: serverUrl,
                 language: language || null,
                 microphoneId: microphoneId || null,

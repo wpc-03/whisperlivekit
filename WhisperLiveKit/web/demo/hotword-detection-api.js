@@ -244,7 +244,7 @@ class HotwordDetectionAPI {
   async _setupAudioWorklet() {
     try {
       // 加载AudioWorklet处理器
-      await this.audioContext.audioWorklet.addModule('pcm_worklet.js');
+      await this.audioContext.audioWorklet.addModule('/web/sdk/pcm_worklet.js');
       
       // 创建AudioWorkletNode
       this.workletNode = new AudioWorkletNode(this.audioContext, 'pcm-forwarder', {

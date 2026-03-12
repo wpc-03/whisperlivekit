@@ -693,7 +693,7 @@ class WhisperHotword {
       } catch (e) {}
     }
 
-    this.transcriptionClient = new WhisperButton({
+    this.transcriptionClient = new WhisperAsr({
       serverUrl: this.serverUrl,
       logLevel: 'info'
     });

@@ -1,10 +1,10 @@
 /**
- * WhisperButton - 按钮模式语音转录客户端
+ * WhisperAsr - 按钮模式语音转录客户端
  * 
  * @description 用于按钮模式的语音转录功能，支持实时语音识别和转录
  * 
  * @example
- * const client = new WhisperButton({
+ * const client = new WhisperAsr({
  *   serverUrl: 'ws://localhost:8000',
  *   language: 'zh'
  * });
@@ -16,7 +16,7 @@
  * await client.start();
  */
 
-class WhisperButton {
+class WhisperAsr {
   /**
    * 创建按钮转录客户端
    * @param {Object} options - 配置选项
@@ -32,7 +32,7 @@ class WhisperButton {
     this.logger = new Logger({
       level: options.logLevel || 'info',
       handler: options.logHandler,
-      prefix: 'WhisperButton'
+      prefix: 'WhisperAsr'
     });
 
     // 配置选项
@@ -86,7 +86,7 @@ class WhisperButton {
     this._userClosing = false;
     this._waitingForStop = false;
 
-    this.logger.info('WhisperButton 初始化完成', { serverUrl: this.serverUrl });
+    this.logger.info('WhisperAsr 初始化完成', { serverUrl: this.serverUrl });
   }
 
   /**
@@ -295,7 +295,7 @@ class WhisperButton {
       }
 
       if (data.type === 'ready_to_stop') {
-        console.log('WhisperButton 收到 ready_to_stop！', data);
+        console.log('WhisperAsr 收到 ready_to_stop！', data);
         this._waitingForStop = false;
         this._userClosing = false;
         this._cleanupResources();
@@ -303,12 +303,12 @@ class WhisperButton {
           this.websocket.close();
         }
         this.logger.info('转录完成');
-        console.log('WhisperButton oncompletetion=', this.oncompletetion, 'this=', this);
+        console.log('WhisperAsr oncompletetion=', this.oncompletetion, 'this=', this);
         if (this.oncompletetion) {
           console.log('调用 oncompletetion...');
           this.oncompletetion(data);
         } else {
-          console.warn('WhisperButton.oncompletetion 回调未设置！');
+          console.warn('WhisperAsr.oncompletetion 回调未设置！');
         }
         this._updateStatus('idle', '转录完成');
         return;
@@ -624,10 +624,11 @@ class WhisperButton {
 
 // 全局导出
 if (typeof window !== 'undefined') {
-  window.WhisperButton = WhisperButton;
+  window.WhisperAsr = WhisperAsr;
+  window.WhisperButton = WhisperAsr; // 兼容旧版本
 }
 
 // 模块导出
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = WhisperButton;
+  module.exports = WhisperAsr;
 }
