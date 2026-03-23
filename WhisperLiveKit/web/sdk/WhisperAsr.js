@@ -1,4 +1,155 @@
 /**
+ * TranscriptRenderer - 转录结果实时渲染器
+ * 
+ * @description 用于实时渲染转录结果，支持已确认文本和实时中间结果的动态显示
+ * 
+ * @example
+ * const renderer = new TranscriptRenderer({
+ *   containerId: 'transcript',
+ *   className: 'transcript-line',
+ *   confirmedClass: 'confirmed',
+ *   unconfirmedClass: 'unconfirmed'
+ * });
+ * 
+ * client.onresult = (result) => {
+ *   renderer.render(result);
+ * };
+ */
+
+class TranscriptRenderer {
+  /**
+   * 创建转录渲染器
+   * @param {Object} options - 配置选项
+   * @param {string} options.containerId - 容器元素ID
+   * @param {string} [options.className='transcript-line'] - 转录行容器类名
+   * @param {string} [options.confirmedClass='confirmed'] - 已确认文本类名
+   * @param {string} [options.unconfirmedClass='buffer_transcription'] - 未确认文本类名
+   * @param {string} [options.waitingText='转录结果将显示在这里...'] - 等待时显示的文本
+   * @param {boolean} [options.autoScroll=true] - 是否自动滚动到底部
+   */
+  constructor(options = {}) {
+    this.container = document.getElementById(options.containerId);
+    if (!this.container) {
+      throw new Error(`TranscriptRenderer: 容器元素 #${options.containerId} 不存在`);
+    }
+
+    this.className = options.className || 'transcript-line';
+    this.confirmedClass = options.confirmedClass || 'confirmed';
+    this.unconfirmedClass = options.unconfirmedClass || 'buffer_transcription';
+    this.waitingText = options.waitingText || '转录结果将显示在这里...';
+    this.autoScroll = options.autoScroll !== false;
+
+    this.lastSignature = null;
+  }
+
+  /**
+   * HTML转义特殊字符
+   * @private
+   */
+  _escapeHtml(text) {
+    if (!text) return '';
+    const escapeMap = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    };
+    return text.replace(/[&<>"']/g, (m) => escapeMap[m]);
+  }
+
+  /**
+   * 创建签名，用于避免不必要的重绘
+   * @private
+   */
+  _createSignature(result) {
+    return JSON.stringify({
+      text: result.text || '',
+      lines: result.lines || [],
+      buffer: result.buffer_transcription || '',
+      status: result.status || 'active_transcription'
+    });
+  }
+
+  /**
+   * 渲染转录结果
+   * @param {Object} result - 转录结果对象
+   */
+  render(result) {
+    if (!result) {
+      this._showWaiting();
+      return;
+    }
+
+    const signature = this._createSignature(result);
+    if (signature === this.lastSignature) {
+      return;
+    }
+    this.lastSignature = signature;
+
+    const lines = result.lines || [];
+    const bufferText = result.buffer_transcription || result.text || '';
+
+    if ((!lines || lines.length === 0) && !bufferText) {
+      this._showWaiting();
+      return;
+    }
+
+    let html = `<div class="${this.className}">`;
+
+    let hasConfirmedText = false;
+    let lastConfirmedIndex = -1;
+    lines.forEach((line, index) => {
+      if (line.text && line.text.trim()) {
+        hasConfirmedText = true;
+        lastConfirmedIndex = index;
+      }
+    });
+
+    lines.forEach((line, index) => {
+      if (line.text && line.text.trim()) {
+        html += `<span class="${this.confirmedClass}">`;
+        html += this._escapeHtml(line.text);
+        html += `</span>`;
+
+        if (index < lastConfirmedIndex) {
+          html += `<br>`;
+        }
+      }
+    });
+
+    if (bufferText) {
+      html += `<span class="${this.unconfirmedClass}">${this._escapeHtml(bufferText)}</span>`;
+    }
+
+    html += `</div>`;
+
+    this.container.innerHTML = html;
+
+    if (this.autoScroll) {
+      this.container.scrollTop = this.container.scrollHeight;
+    }
+  }
+
+  /**
+   * 显示等待提示
+   * @private
+   */
+  _showWaiting() {
+    this.container.innerHTML = `<p style="color: #999; text-align: center;">${this.waitingText}</p>`;
+    this.lastSignature = null;
+  }
+
+  /**
+   * 清空显示
+   */
+  clear() {
+    this.lastSignature = null;
+    this._showWaiting();
+  }
+}
+
+/**
  * WhisperAsr - 按钮模式语音转录客户端
  * 
  * @description 用于按钮模式的语音转录功能，支持实时语音识别和转录
@@ -626,6 +777,7 @@ class WhisperAsr {
 if (typeof window !== 'undefined') {
   window.WhisperAsr = WhisperAsr;
   window.WhisperButton = WhisperAsr; // 兼容旧版本
+  window.TranscriptRenderer = TranscriptRenderer;
 }
 
 // 模块导出
