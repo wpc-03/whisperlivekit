@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+websockets
+numpy
+scipy
+requests
+pyyaml
+pydantic
+pydantic-settings
+python-jose[cryptography]
+passlib[bcrypt]

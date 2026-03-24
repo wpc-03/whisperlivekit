@@ -3,15 +3,21 @@ import logging
 import pathlib
 import time
 from contextlib import asynccontextmanager
+from datetime import timedelta
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, HTTPException, status, Form
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.security import OAuth2PasswordRequestForm
 
 from whisperlivekit import (AudioProcessor, TranscriptionEngine,
                             get_inline_ui_html, parse_args)
 from whisperlivekit.hotword_service import HotwordService
+from whisperlivekit.auth import user_manager, create_access_token, get_current_active_user, ACCESS_TOKEN_EXPIRE_MINUTES
+from whisperlivekit.keywords_manager import KeywordsManager
+from whisperlivekit.settings_manager import settings_manager
+from whisperlivekit.wakewords_manager import WakewordsManager
 import whisperlivekit.web as webpkg
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -22,15 +28,21 @@ logger.setLevel(logging.DEBUG)
 args = parse_args()
 transcription_engine = None
 hotword_service = None
+keywords_manager = None
+wakewords_manager = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):    
-    global transcription_engine, hotword_service
+    global transcription_engine, hotword_service, keywords_manager, wakewords_manager
     
     # 初始化转录引擎
     transcription_engine = TranscriptionEngine(
         **vars(args),
     )
+    
+    # 初始化关键词管理器
+    keywords_file = args.keywords_file if hasattr(args, 'keywords_file') else 'keywords.txt'
+    keywords_manager = KeywordsManager(keywords_file)
     
     # 初始化唤醒词检测服务
     if args.hotword_model_dir:
@@ -46,9 +58,14 @@ async def lifespan(app: FastAPI):
             sample_rate=args.hotword_sample_rate,
             num_threads=args.hotword_threads
         )
+        
+        # 初始化唤醒词管理器
+        wakewords_manager = WakewordsManager(args.hotword_model_dir)
+        
         logger.info(f"唤醒词检测服务初始化完成，模型目录: {args.hotword_model_dir}，阈值: {args.hotword_threshold}")
     else:
         hotword_service = None
+        wakewords_manager = None
         logger.info("未配置唤醒词模型目录，唤醒词检测服务未初始化")
     
     yield
@@ -66,9 +83,150 @@ app.add_middleware(
 web_dir = pathlib.Path(webpkg.__file__).parent
 app.mount("/web", StaticFiles(directory=str(web_dir)), name="web")
 
+# 挂载管理系统静态文件目录
+admin_dir = web_dir / "admin"
+if admin_dir.exists():
+    app.mount("/admin", StaticFiles(directory=str(admin_dir)), name="admin")
+
 @app.get("/")
 async def get():
     return HTMLResponse(get_inline_ui_html())
+
+# 认证相关接口
+@app.post("/api/auth/login")
+async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    user = user_manager.authenticate_user(form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user["username"]}, expires_delta=access_token_expires
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
+
+@app.post("/api/auth/logout")
+async def logout(current_user: dict = Depends(get_current_active_user)):
+    # 前端处理登出，后端无需特殊处理
+    return {"message": "Logout successful"}
+
+@app.get("/api/auth/me")
+async def get_me(current_user: dict = Depends(get_current_active_user)):
+    return {"username": current_user["username"]}
+
+# 专业术语管理接口
+@app.get("/api/keywords")
+async def get_keywords(current_user: dict = Depends(get_current_active_user)):
+    if not keywords_manager:
+        raise HTTPException(status_code=404, detail="Keywords manager not initialized")
+    return keywords_manager.get_keywords()
+
+@app.post("/api/keywords")
+async def add_keyword(keyword: str = Form(...), current_user: dict = Depends(get_current_active_user)):
+    if not keywords_manager:
+        raise HTTPException(status_code=404, detail="Keywords manager not initialized")
+    success = keywords_manager.add_keyword(keyword)
+    if success:
+        return {"message": "Keyword added successfully"}
+    else:
+        raise HTTPException(status_code=400, detail="Failed to add keyword")
+
+@app.put("/api/keywords/{old_keyword}")
+async def update_keyword(old_keyword: str, new_keyword: str = Form(...), current_user: dict = Depends(get_current_active_user)):
+    if not keywords_manager:
+        raise HTTPException(status_code=404, detail="Keywords manager not initialized")
+    success = keywords_manager.update_keyword(old_keyword, new_keyword)
+    if success:
+        return {"message": "Keyword updated successfully"}
+    else:
+        raise HTTPException(status_code=400, detail="Failed to update keyword")
+
+@app.delete("/api/keywords/{keyword}")
+async def delete_keyword(keyword: str, current_user: dict = Depends(get_current_active_user)):
+    if not keywords_manager:
+        raise HTTPException(status_code=404, detail="Keywords manager not initialized")
+    success = keywords_manager.delete_keyword(keyword)
+    if success:
+        return {"message": "Keyword deleted successfully"}
+    else:
+        raise HTTPException(status_code=400, detail="Failed to delete keyword")
+
+# 参数设置接口
+@app.get("/api/settings")
+async def get_settings(current_user: dict = Depends(get_current_active_user)):
+    return settings_manager.get_settings()
+
+@app.put("/api/settings")
+async def update_settings(settings: dict, current_user: dict = Depends(get_current_active_user)):
+    success = settings_manager.update_settings(settings)
+    if success:
+        return {"message": "Settings updated successfully"}
+    else:
+        raise HTTPException(status_code=400, detail="Failed to update settings")
+
+@app.get("/api/settings/defaults")
+async def get_default_settings(current_user: dict = Depends(get_current_active_user)):
+    return settings_manager.get_default_settings()
+
+@app.post("/api/settings/reset")
+async def reset_settings(current_user: dict = Depends(get_current_active_user)):
+    success = settings_manager.reset_settings()
+    if success:
+        return {"message": "Settings reset successfully", "restart_required": True}
+    else:
+        raise HTTPException(status_code=400, detail="Failed to reset settings")
+
+
+
+# 唤醒词管理接口
+@app.get("/api/wakewords")
+async def get_wakewords(current_user: dict = Depends(get_current_active_user)):
+    if not wakewords_manager:
+        raise HTTPException(status_code=404, detail="Wakewords manager not initialized")
+    return wakewords_manager.get_wakewords()
+
+@app.post("/api/wakewords")
+async def add_wakeword(word: str = Form(...), boost: float = Form(None), threshold: float = Form(None), current_user: dict = Depends(get_current_active_user)):
+    if not wakewords_manager:
+        raise HTTPException(status_code=404, detail="Wakewords manager not initialized")
+    success = wakewords_manager.add_wakeword(word, boost, threshold)
+    if success:
+        return {"message": "Wakeword added successfully"}
+    else:
+        raise HTTPException(status_code=400, detail="Failed to add wakeword")
+
+@app.put("/api/wakewords/{old_word}")
+async def update_wakeword(old_word: str, new_word: str = Form(...), boost: float = Form(None), threshold: float = Form(None), current_user: dict = Depends(get_current_active_user)):
+    if not wakewords_manager:
+        raise HTTPException(status_code=404, detail="Wakewords manager not initialized")
+    success = wakewords_manager.update_wakeword(old_word, new_word, boost, threshold)
+    if success:
+        return {"message": "Wakeword updated successfully"}
+    else:
+        raise HTTPException(status_code=400, detail="Failed to update wakeword")
+
+@app.delete("/api/wakewords/{word}")
+async def delete_wakeword(word: str, current_user: dict = Depends(get_current_active_user)):
+    if not wakewords_manager:
+        raise HTTPException(status_code=404, detail="Wakewords manager not initialized")
+    success = wakewords_manager.delete_wakeword(word)
+    if success:
+        return {"message": "Wakeword deleted successfully"}
+    else:
+        raise HTTPException(status_code=400, detail="Failed to delete wakeword")
+
+@app.post("/api/wakewords/convert")
+async def convert_wakewords(current_user: dict = Depends(get_current_active_user)):
+    if not wakewords_manager:
+        raise HTTPException(status_code=404, detail="Wakewords manager not initialized")
+    success = wakewords_manager.convert_wakewords()
+    if success:
+        return {"message": "Wakewords converted successfully"}
+    else:
+        raise HTTPException(status_code=400, detail="Failed to convert wakewords")
 
 
 async def handle_websocket_results(websocket, results_generator):

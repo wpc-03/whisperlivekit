@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhisperLiveKit 管理系统 - 专业术语管理</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>WhisperLiveKit 管理系统</h1>
+            <div class="user-info">
+                <span id="username">加载中...</span>
+                <button id="btn-logout" class="btn-logout">登出</button>
+            </div>
+        </div>
+        
+        <div class="sidebar">
+            <h3>功能导航</h3>
+            <ul>
+                <li><a href="dashboard.html">控制台</a></li>
+                <li><a href="keywords.html" class="active">专业术语管理</a></li>
+                <li><a href="settings.html">参数设置</a></li>
+                <li><a href="wakewords.html">唤醒词管理</a></li>
+            </ul>
+        </div>
+        
+        <div class="content">
+            <h2>专业术语管理</h2>
+            
+            <div class="form-container">
+                <h3>添加专业术语</h3>
+                <form id="add-keyword-form">
+                    <div class="form-row">
+                        <label for="new-keyword">术语</label>
+                        <input type="text" id="new-keyword" name="keyword" required>
+                    </div>
+                    <div class="form-row">
+                        <button type="submit" class="btn btn-primary">添加</button>
+                    </div>
+                </form>
+                <div id="add-message" class="message"></div>
+            </div>
+            
+            <div class="table-container">
+                <h3>术语列表</h3>
+                <table id="keywords-table">
+                    <thead>
+                        <tr>
+                            <th>术语</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="keywords-list">
+                        <tr>
+                            <td colspan="2">加载中...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <script src="js/auth.js"></script>
+    <script src="js/keywords.js"></script>
+</body>
+</html>

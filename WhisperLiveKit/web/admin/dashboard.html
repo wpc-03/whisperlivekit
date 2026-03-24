@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhisperLiveKit 管理系统 - 控制台</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>WhisperLiveKit 管理系统</h1>
+            <div class="user-info">
+                <span id="username">加载中...</span>
+                <button id="btn-logout" class="btn-logout">登出</button>
+            </div>
+        </div>
+        
+        <div class="sidebar">
+            <h3>功能导航</h3>
+            <ul>
+                <li><a href="dashboard.html" class="active">控制台</a></li>
+                <li><a href="keywords.html">专业术语管理</a></li>
+                <li><a href="settings.html">参数设置</a></li>
+                <li><a href="wakewords.html">唤醒词管理</a></li>
+            </ul>
+        </div>
+        
+        <div class="content">
+            <h2>系统概览</h2>
+            <div class="dashboard-cards">
+                <div class="card">
+                    <h3>系统状态</h3>
+                    <p>服务运行正常</p>
+                </div>
+                <div class="card">
+                    <h3>专业术语</h3>
+                    <p id="keywords-count">加载中...</p>
+                </div>
+                <div class="card">
+                    <h3>唤醒词</h3>
+                    <p id="wakewords-count">加载中...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="js/auth.js"></script>
+    <script src="js/dashboard.js"></script>
+</body>
+</html>
