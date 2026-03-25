@@ -116,6 +116,8 @@ async function deleteWakeword(word) {
 
         if (response && response.ok) {
             loadWakewords();
+            // 自动执行转换功能
+            convertWakewords();
         } else {
             alert('删除失败');
         }
@@ -135,6 +137,8 @@ function editWakeword(oldWord, boost, threshold) {
         updateWakeword(oldWord, newWord.trim(), newBoost, newThreshold).then(success => {
             if (success) {
                 loadWakewords();
+                // 自动执行转换功能
+                convertWakewords();
             } else {
                 alert('更新失败');
             }
@@ -206,6 +210,8 @@ window.addEventListener('load', async function() {
             document.getElementById('new-boost').value = '';
             document.getElementById('new-threshold').value = '';
             loadWakewords();
+            // 自动执行转换功能
+            convertWakewords();
             setTimeout(() => {
                 messageElement.textContent = '';
                 messageElement.className = 'message';
@@ -216,6 +222,5 @@ window.addEventListener('load', async function() {
         }
     });
     
-    // 转换按钮处理
-    document.getElementById('btn-convert').addEventListener('click', convertWakewords);
+
 });
