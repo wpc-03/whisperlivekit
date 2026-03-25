@@ -57,7 +57,7 @@ async function login(username, password) {
     }
 }
 
-// 登出
+// 退出
 async function logout() {
     try {
         const response = await fetch('/api/auth/logout', {
@@ -70,7 +70,7 @@ async function logout() {
         clearToken();
         redirectToLogin();
     } catch (error) {
-        console.error('登出错误:', error);
+        console.error('退出错误:', error);
         clearToken();
         redirectToLogin();
     }
@@ -168,7 +168,7 @@ if (document.getElementById('login-form')) {
     });
 }
 
-// 登出按钮处理
+// 退出按钮处理
 if (document.getElementById('btn-logout')) {
     document.getElementById('btn-logout').addEventListener('click', logout);
 }

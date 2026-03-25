@@ -11,7 +11,7 @@ async function loadUserInfo() {
 // 加载当前设置
 async function loadSettings() {
     try {
-        const response = await fetchWithAuth('/api/settings');
+        const response = await fetchWithAuth('/api/config');
         if (response && response.ok) {
             const settings = await response.json();
             populateSettingsForm(settings);
@@ -28,6 +28,20 @@ async function loadSettings() {
 
 // 填充设置表单
 function populateSettingsForm(settings) {
+    // 服务设置
+    if (settings.host) {
+        document.getElementById('host').value = settings.host;
+    }
+    if (settings.port !== undefined) {
+        document.getElementById('port').value = settings.port;
+    }
+    if (settings.log_level) {
+        document.getElementById('log_level').value = settings.log_level;
+    }
+    if (settings.backend_policy) {
+        document.getElementById('backend_policy').value = settings.backend_policy;
+    }
+    
     // 模型设置
     if (settings.model) {
         document.getElementById('model').value = settings.model;
@@ -91,12 +105,23 @@ function populateSettingsForm(settings) {
     if (settings.hotword_threads !== undefined) {
         document.getElementById('hotword_threads').value = settings.hotword_threads;
     }
+    
+    // SSL设置
+    if (settings.ssl_certfile) {
+        document.getElementById('ssl_certfile').value = settings.ssl_certfile;
+    }
+    if (settings.ssl_keyfile) {
+        document.getElementById('ssl_keyfile').value = settings.ssl_keyfile;
+    }
+    if (settings.forwarded_allow_ips) {
+        document.getElementById('forwarded_allow_ips').value = settings.forwarded_allow_ips;
+    }
 }
 
 // 保存设置
 async function saveSettings(settings) {
     try {
-        const response = await fetchWithAuth('/api/settings', {
+        const response = await fetchWithAuth('/api/config', {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
@@ -105,7 +130,8 @@ async function saveSettings(settings) {
         });
 
         if (response && response.ok) {
-            return true;
+            const result = await response.json();
+            return result;
         } else {
             return false;
         }
@@ -122,18 +148,19 @@ async function resetSettings() {
     }
 
     try {
-        const response = await fetchWithAuth('/api/settings/reset', {
+        const response = await fetchWithAuth('/api/config/reset', {
             method: 'POST'
         });
 
         if (response && response.ok) {
+            const result = await response.json();
             loadSettings();
-            document.getElementById('settings-message').textContent = '重置成功';
+            document.getElementById('settings-message').textContent = '重置成功' + (result.restart_required ? '，需要重启服务使配置生效' : '');
             document.getElementById('settings-message').className = 'message success';
             setTimeout(() => {
                 document.getElementById('settings-message').textContent = '';
                 document.getElementById('settings-message').className = 'message';
-            }, 2000);
+            }, 3000);
         } else {
             document.getElementById('settings-message').textContent = '重置失败';
             document.getElementById('settings-message').className = 'message error';
@@ -164,6 +191,10 @@ window.addEventListener('load', async function() {
         e.preventDefault();
         
         const settings = {
+            host: document.getElementById('host').value,
+            port: parseInt(document.getElementById('port').value),
+            log_level: document.getElementById('log_level').value,
+            backend_policy: document.getElementById('backend_policy').value,
             model: document.getElementById('model').value,
             model_path: document.getElementById('model_path').value,
             language: document.getElementById('language').value,
@@ -181,12 +212,15 @@ window.addEventListener('load', async function() {
             hotword_model_dir: document.getElementById('hotword_model_dir').value,
             hotword_threshold: parseFloat(document.getElementById('hotword_threshold').value),
             hotword_sample_rate: parseInt(document.getElementById('hotword_sample_rate').value),
-            hotword_threads: parseInt(document.getElementById('hotword_threads').value)
+            hotword_threads: parseInt(document.getElementById('hotword_threads').value),
+            ssl_certfile: document.getElementById('ssl_certfile').value,
+            ssl_keyfile: document.getElementById('ssl_keyfile').value,
+            forwarded_allow_ips: document.getElementById('forwarded_allow_ips').value
         };
         
-        const success = await saveSettings(settings);
-        if (success) {
-            document.getElementById('settings-message').textContent = '保存成功';
+        const result = await saveSettings(settings);
+        if (result) {
+            document.getElementById('settings-message').textContent = result.message + (result.restart_required ? '，需要重启服务使配置生效' : '');
             document.getElementById('settings-message').className = 'message success';
             
             setTimeout(() => {

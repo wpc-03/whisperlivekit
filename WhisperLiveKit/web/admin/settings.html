@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WhisperLiveKit 管理系统 - 参数设置</title>
+    <title>语音识别后台管理系统 - 参数设置</title>
     <link rel="stylesheet" href="css/style.css">
     <style>
         .form-section {
@@ -24,12 +24,38 @@
             font-size: 16px;
             font-weight: 500;
         }
+        
+        /* 参数设置卡片滚动条 */
+        .settings-card {
+            max-height: calc(100vh - 150px);
+            overflow-y: auto;
+        }
+        
+        /* 自定义滚动条样式 */
+        .settings-card::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        .settings-card::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        
+        .settings-card::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+        
+        .settings-card::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>WhisperLiveKit 管理系统</h1>
+            <h1>语音识别后台管理系统</h1>
             <div class="user-info">
                 <span id="username">加载中...</span>
                 <button id="btn-logout" class="btn-logout">登出</button>
@@ -51,15 +77,44 @@
             <div class="content">
                 <h2>参数设置</h2>
                 
-                <div class="card">
+                <div class="card settings-card">
                     <div class="card-title">系统参数配置</div>
                     <form id="settings-form">
+                        <div class="form-section">
+                            <h3>服务设置</h3>
+                            <div class="form-row">
+                                <label for="host">服务主机地址</label>
+                                <input type="text" id="host" name="host" value="0.0.0.0">
+                            </div>
+                            
+                            <div class="form-row">
+                                <label for="port">服务端口</label>
+                                <input type="number" id="port" name="port" min="1024" max="65535" value="8000">
+                            </div>
+                            
+                            <div class="form-row">
+                                <label for="log_level">日志级别</label>
+                                <select id="log_level" name="log_level">
+                                    <option value="DEBUG">DEBUG</option>
+                                    <option value="INFO" selected>INFO</option>
+                                    <option value="WARNING">WARNING</option>
+                                    <option value="ERROR">ERROR</option>
+                                    <option value="CRITICAL">CRITICAL</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-row" style="text-align: left;">
+                                <label for="backend_policy">后端策略</label>
+                                <input type="text" id="backend_policy" name="backend_policy" value="localagreement" readonly style="background-color: #f5f5f5;">
+                            </div>
+                        </div>
+                        
                         <div class="form-section">
                             <h3>模型设置</h3>
                             <div class="form-row">
                                 <label for="model">模型类型</label>
                                 <select id="model" name="model">
-                                    <option value="tiny">tiny</option>
+                                    <option value="tiny" selected>tiny</option>
                                     <option value="base">base</option>
                                     <option value="small">small</option>
                                     <option value="medium">medium</option>
@@ -71,14 +126,14 @@
                             
                             <div class="form-row">
                                 <label for="model_path">模型路径</label>
-                                <input type="text" id="model_path" name="model_path" placeholder="例如: D:\python\FastWhisperTranscriber\model\models--Systran--faster-whisper-small">
+                                <input type="text" id="model_path" name="model_path" value="/app/models/models--Systran--faster-whisper-tiny">
                             </div>
                             
                             <div class="form-row">
                                 <label for="language">语言设置</label>
                                 <select id="language" name="language">
                                     <option value="auto">自动检测</option>
-                                    <option value="zh">中文</option>
+                                    <option value="zh" selected>中文</option>
                                     <option value="en">英文</option>
                                     <option value="ja">日语</option>
                                     <option value="ko">韩语</option>
@@ -88,12 +143,12 @@
                                 </select>
                             </div>
                             
-                            <div class="form-row">
+                            <div class="form-row" style="text-align: left;">
                                 <label for="backend">后端</label>
                                 <select id="backend" name="backend">
                                     <option value="auto">auto</option>
                                     <option value="mlx-whisper">mlx-whisper</option>
-                                    <option value="faster-whisper">faster-whisper</option>
+                                    <option value="faster-whisper" selected>faster-whisper</option>
                                     <option value="whisper">whisper</option>
                                     <option value="openai-api">openai-api</option>
                                 </select>
@@ -109,14 +164,14 @@
                             
                             <div class="form-row">
                                 <label for="buffer_trimming_sec">缓冲区修剪阈值 (秒)</label>
-                                <input type="number" id="buffer_trimming_sec" name="buffer_trimming_sec" min="1" step="1" value="15">
+                                <input type="number" id="buffer_trimming_sec" name="buffer_trimming_sec" min="1" step="1" value="10">
                             </div>
                             
-                            <div class="form-row">
+                            <div class="form-row" style="text-align: left;">
                                 <label for="pcm_input">PCM输入</label>
                                 <select id="pcm_input" name="pcm_input">
                                     <option value="false">否</option>
-                                    <option value="true">是</option>
+                                    <option value="true" selected>是</option>
                                 </select>
                             </div>
                         </div>
@@ -127,23 +182,23 @@
                                 <label for="confidence_validation">置信度验证</label>
                                 <select id="confidence_validation" name="confidence_validation">
                                     <option value="false">否</option>
-                                    <option value="true">是</option>
+                                    <option value="true" selected>是</option>
                                 </select>
                             </div>
                             
                             <div class="form-row">
                                 <label for="beam_size">Beam Size</label>
-                                <input type="number" id="beam_size" name="beam_size" min="1" value="3">
+                                <input type="number" id="beam_size" name="beam_size" min="1" value="5">
                             </div>
                             
                             <div class="form-row">
                                 <label for="keywords_file">关键词文件</label>
-                                <input type="text" id="keywords_file" name="keywords_file" placeholder="例如: d:\python\whisperlivekit\keywords_example.txt">
+                                <input type="text" id="keywords_file" name="keywords_file" value="/app/keywords.txt">
                             </div>
                             
-                            <div class="form-row">
+                            <div class="form-row" style="text-align: left;">
                                 <label for="warmup_file">预热文件</label>
-                                <input type="text" id="warmup_file" name="warmup_file" placeholder="例如: D:\python\whisperlivekit\samples_zh.wav">
+                                <input type="text" id="warmup_file" name="warmup_file" value="/app/samples_zh.wav">
                             </div>
                         </div>
                         
@@ -159,10 +214,10 @@
                             
                             <div class="form-row">
                                 <label for="diarization_model">说话人识别模型</label>
-                                <input type="text" id="diarization_model" name="diarization_model" placeholder="例如: D:\python\FastWhisperTranscriber\model\models--nvidia--diar_streaming_sortformer_4spk-v2\snapshots\6dbf0d69730bfee097056692b86525a0a23b32f9\diar_streaming_sortformer_4spk-v2.nemo">
+                                <input type="text" id="diarization_model" name="diarization_model" placeholder="例如: /app/models/models--nvidia--diar_streaming_sortformer_4spk-v2/snapshots/6dbf0d69730bfee097056692b86525a0a23b32f9/diar_streaming_sortformer_4spk-v2.nemo">
                             </div>
                             
-                            <div class="form-row">
+                            <div class="form-row" style="text-align: left;">
                                 <label for="punctuation_split">标点分割</label>
                                 <select id="punctuation_split" name="punctuation_split">
                                     <option value="false">否</option>
@@ -175,7 +230,7 @@
                             <h3>唤醒词设置</h3>
                             <div class="form-row">
                                 <label for="hotword_model_dir">唤醒词模型目录</label>
-                                <input type="text" id="hotword_model_dir" name="hotword_model_dir" placeholder="例如: D:\python\FastWhisperTranscriber\model\sherpa-onnx-kws-zipformer-wenetspeech">
+                                <input type="text" id="hotword_model_dir" name="hotword_model_dir" placeholder="例如: /app/models/sherpa-onnx-kws-zipformer-wenetspeech">
                             </div>
                             
                             <div class="form-row">
@@ -188,15 +243,33 @@
                                 <input type="number" id="hotword_sample_rate" name="hotword_sample_rate" min="8000" value="16000">
                             </div>
                             
-                            <div class="form-row">
+                            <div class="form-row" style="text-align: left;">
                                 <label for="hotword_threads">唤醒词线程数</label>
                                 <input type="number" id="hotword_threads" name="hotword_threads" min="1" value="4">
                             </div>
                         </div>
                         
-                        <div class="form-row" style="margin-top: 32px;">
-                            <button type="submit" class="btn btn-primary">保存设置</button>
-                            <button type="button" class="btn btn-secondary" id="btn-reset">重置为默认值</button>
+                        <div class="form-section">
+                            <h3>SSL设置</h3>
+                            <div class="form-row">
+                                <label for="ssl_certfile">SSL证书文件</label>
+                                <input type="text" id="ssl_certfile" name="ssl_certfile" placeholder="例如: /app/ssl/cert.pem">
+                            </div>
+                            
+                            <div class="form-row">
+                                <label for="ssl_keyfile">SSL密钥文件</label>
+                                <input type="text" id="ssl_keyfile" name="ssl_keyfile" placeholder="例如: /app/ssl/key.pem">
+                            </div>
+                            
+                            <div class="form-row" style="text-align: left;">
+                                <label for="forwarded_allow_ips">转发允许的IP</label>
+                                <input type="text" id="forwarded_allow_ips" name="forwarded_allow_ips" placeholder="例如: 127.0.0.1,192.168.1.0/24">
+                            </div>
+                        </div>
+                        
+                        <div class="button-group">
+                            <button type="submit" class="btn btn-primary btn-large">保存设置</button>
+                            <button type="button" class="btn btn-secondary btn-large" id="btn-reset">重置为默认值</button>
                         </div>
                     </form>
                     <div id="settings-message" class="message" style="margin-top: 16px;"></div>

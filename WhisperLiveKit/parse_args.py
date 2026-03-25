@@ -146,7 +146,7 @@ def parse_args():
     parser.add_argument(
         "--backend-policy",
         type=str,
-        default="simulstreaming",
+        default="localagreement",
         choices=["1", "2", "simulstreaming", "localagreement"],
         help="Select the streaming policy: 1 or 'simulstreaming' for AlignAtt, 2 or 'localagreement' for LocalAgreement.",
     )
@@ -232,7 +232,7 @@ def parse_args():
     parser.add_argument(
         "--hotword-model-dir",
         type=str,
-        default=r"D:\python\FastWhisperTranscriber\model\sherpa-onnx-kws-zipformer-wenetspeech",
+        default=None,
         dest="hotword_model_dir",
         help="Path to the hotword detection model directory containing encoder.onnx, decoder.onnx, etc.",
     )

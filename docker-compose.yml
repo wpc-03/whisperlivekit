@@ -8,14 +8,17 @@ services:
     image: whisperlivekit:cpu
     container_name: whisper-asr-cpu
     ports:
+      # "主机端口:容器端口"
       - "8000:8000"
     volumes:
       # Mount Whisper model and NeMo diarization model from D: drive
       - D:/python/FastWhisperTranscriber/model:/app/models:ro
       # Mount keywords file
-      - ./keywords_example.txt:/app/keywords.txt:ro
+      - ./keywords.txt:/app/keywords.txt:rw
       # Mount warmup audio file
       - D:/python/whisperlivekit/samples_zh.wav:/app/samples_zh.wav:ro
+      # 添加配置文件卷挂载
+      - ./config.json:/app/config.json:rw  # 可读写，允许保存配置
       # Logs directory
       - ./logs:/app/logs
       # SSL certificates
@@ -26,28 +29,6 @@ services:
       - HF_HOME=/app/models
       - TRANSFORMERS_CACHE=/app/models
       - KEYWORDS_FILE=/app/keywords.txt
-    command: [
-      "--model", "tiny",
-      "--model-path", "/app/models/models--Systran--faster-whisper-tiny",
-      "--language", "zh",
-      "--backend-policy", "localagreement",
-      "--backend", "faster-whisper",
-      "--pcm-input",
-      "--keywords-file", "/app/keywords.txt",
-      "--host", "0.0.0.0",
-      "--port", "8000",
-      "--ssl-certfile", "/app/ssl/cert.pem",
-      "--ssl-keyfile", "/app/ssl/key.pem",
-      # "--diarization",
-      # "--diarization-model", "/app/models/models--nvidia--diar_streaming_sortformer_4spk-v2/snapshots/6dbf0d69730bfee097056692b86525a0a23b32f9/diar_streaming_sortformer_4spk-v2.nemo",
-      "--beam-size", "5",
-      "--min-chunk-size", "0.15",
-      "--buffer_trimming_sec", "10",
-      # "--no-vac",
-      "--confidence-validation",
-      "--warmup-file", "/app/samples_zh.wav",
-      "--log-level", "INFO"
-    ]
     restart: unless-stopped
     # healthcheck:
     #   test: ["CMD", "python", "-f", "http://localhost:8000"]

@@ -16,8 +16,8 @@ from whisperlivekit import (AudioProcessor, TranscriptionEngine,
 from whisperlivekit.hotword_service import HotwordService
 from whisperlivekit.auth import user_manager, create_access_token, get_current_active_user, ACCESS_TOKEN_EXPIRE_MINUTES
 from whisperlivekit.keywords_manager import KeywordsManager
-from whisperlivekit.settings_manager import settings_manager
 from whisperlivekit.wakewords_manager import WakewordsManager
+from whisperlivekit.config_manager import config_manager
 import whisperlivekit.web as webpkg
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -25,7 +25,19 @@ logging.getLogger().setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
+# 解析命令行参数
 args = parse_args()
+
+# 从配置文件加载配置并更新args对象
+config = config_manager.get_config()
+for key, value in config.items():
+    if hasattr(args, key):
+        setattr(args, key, value)
+    elif key == "backend_policy":
+        # backend_policy参数在parse_args中可能是其他名称
+        if hasattr(args, "backend_policy"):
+            setattr(args, "backend_policy", value)
+
 transcription_engine = None
 hotword_service = None
 keywords_manager = None
@@ -110,7 +122,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
 
 @app.post("/api/auth/logout")
 async def logout(current_user: dict = Depends(get_current_active_user)):
-    # 前端处理登出，后端无需特殊处理
+    # 前端处理退出，后端无需特殊处理
     return {"message": "Logout successful"}
 
 @app.get("/api/auth/me")
@@ -153,33 +165,6 @@ async def delete_keyword(keyword: str, current_user: dict = Depends(get_current_
         return {"message": "Keyword deleted successfully"}
     else:
         raise HTTPException(status_code=400, detail="Failed to delete keyword")
-
-# 参数设置接口
-@app.get("/api/settings")
-async def get_settings(current_user: dict = Depends(get_current_active_user)):
-    return settings_manager.get_settings()
-
-@app.put("/api/settings")
-async def update_settings(settings: dict, current_user: dict = Depends(get_current_active_user)):
-    success = settings_manager.update_settings(settings)
-    if success:
-        return {"message": "Settings updated successfully"}
-    else:
-        raise HTTPException(status_code=400, detail="Failed to update settings")
-
-@app.get("/api/settings/defaults")
-async def get_default_settings(current_user: dict = Depends(get_current_active_user)):
-    return settings_manager.get_default_settings()
-
-@app.post("/api/settings/reset")
-async def reset_settings(current_user: dict = Depends(get_current_active_user)):
-    success = settings_manager.reset_settings()
-    if success:
-        return {"message": "Settings reset successfully", "restart_required": True}
-    else:
-        raise HTTPException(status_code=400, detail="Failed to reset settings")
-
-
 
 # 唤醒词管理接口
 @app.get("/api/wakewords")
@@ -227,6 +212,41 @@ async def convert_wakewords(current_user: dict = Depends(get_current_active_user
         return {"message": "Wakewords converted successfully"}
     else:
         raise HTTPException(status_code=400, detail="Failed to convert wakewords")
+
+# 配置管理接口
+@app.get("/api/config")
+async def get_config(current_user: dict = Depends(get_current_active_user)):
+    """获取当前配置"""
+    return config_manager.get_config()
+
+@app.put("/api/config")
+async def update_config(config_data: dict, current_user: dict = Depends(get_current_active_user)):
+    """更新配置"""
+    success = config_manager.update_config(config_data)
+    if success:
+        return {"message": "配置更新成功", "restart_required": True}
+    else:
+        raise HTTPException(status_code=400, detail="配置更新失败")
+
+@app.post("/api/config/reset")
+async def reset_config(current_user: dict = Depends(get_current_active_user)):
+    """重置配置为默认值"""
+    success = config_manager.reset_config()
+    if success:
+        return {"message": "配置重置成功", "restart_required": True}
+    else:
+        raise HTTPException(status_code=400, detail="配置重置失败")
+
+@app.get("/api/config/defaults")
+async def get_default_config(current_user: dict = Depends(get_current_active_user)):
+    """获取默认配置"""
+    return config_manager.get_default_config_dict()
+
+@app.post("/api/config/restart")
+async def restart_service(current_user: dict = Depends(get_current_active_user)):
+    """重启服务（通知管理员需要手动重启）"""
+    logger.info("收到服务重启请求，请手动重启Docker容器使配置生效")
+    return {"message": "配置已保存，请手动重启Docker容器使配置生效", "manual_restart_required": True}
 
 
 async def handle_websocket_results(websocket, results_generator):

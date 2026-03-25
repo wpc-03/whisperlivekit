@@ -82,23 +82,41 @@ body {
 }
 
 .btn-primary {
-    background-color: #1890ff;
+    background-color: #1677ff;
     color: white;
+    border: none;
+    border-radius: 4px;
+    box-shadow: 0 2px 6px rgba(22, 119, 255, 0.4);
+    height: 34px;
+    min-width: 120px;
+    padding: 0 16px;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 34px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    white-space: nowrap;
+}
+
+.btn-primary:hover {
+    background-color: #4096ff;
+    box-shadow: 0 4px 12px rgba(22, 119, 255, 0.5);
+}
+
+.btn-primary:active {
+    background-color: #0958d9;
+    box-shadow: 0 1px 4px rgba(22, 119, 255, 0.6);
+}
+
+/* 登录页面按钮特殊样式 */
+.login-box .btn-primary {
     width: 100%;
     margin-top: 20px;
     height: 40px;
     line-height: 40px;
     padding: 0;
-}
-
-.btn-primary:hover {
-    background-color: #40a9ff;
-    border-color: #40a9ff;
-}
-
-.btn-primary:active {
-    background-color: #096dd9;
-    border-color: #096dd9;
 }
 
 .message {
@@ -134,20 +152,20 @@ body {
 .header {
     background-color: white;
     color: #333;
-    padding: 0 24px;
+    padding: 0 32px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    height: 64px;
-    box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
+    height: 72px;
+    box-shadow: 0 2px 8px rgba(0, 21, 41, 0.15);
     position: relative;
     z-index: 10;
 }
 
 .header h1 {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 500;
-    color: #1890ff;
+    color: #1677ff;
 }
 
 .header .user-info {
@@ -161,18 +179,28 @@ body {
 }
 
 .header .btn-logout {
-    background-color: transparent;
-    color: #1890ff;
-    padding: 6px 12px;
-    border: 1px solid #1890ff;
-    border-radius: 4px;
+    background-color: #1677ff;
+    color: white;
+    padding: 8px 20px;
+    border: none;
+    border-radius: 6px;
     cursor: pointer;
     font-size: 14px;
-    transition: all 0.3s;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 6px rgba(22, 119, 255, 0.4);
+    line-height: 20px;
+    height: 36px;
 }
 
 .header .btn-logout:hover {
-    background-color: #e6f7ff;
+    background-color: #4096ff;
+    box-shadow: 0 4px 12px rgba(22, 119, 255, 0.5);
+}
+
+.header .btn-logout:active {
+    background-color: #0958d9;
+    box-shadow: 0 1px 4px rgba(22, 119, 255, 0.6);
 }
 
 /* 主体内容区域 */
@@ -184,17 +212,17 @@ body {
 
 /* 左侧侧边栏 */
 .sidebar {
-    width: 200px;
+    width: 220px;
     background-color: white;
     border-right: 1px solid #e8e8e8;
-    height: calc(100vh - 64px);
+    height: calc(100vh - 72px);
     overflow-y: auto;
     transition: all 0.3s;
 }
 
 .sidebar h3 {
     margin: 0;
-    padding: 16px 24px 8px;
+    padding: 20px 24px 12px;
     color: #999;
     font-size: 12px;
     font-weight: 500;
@@ -213,23 +241,32 @@ body {
 
 .sidebar ul li a {
     display: block;
-    padding: 12px 24px;
-    color: #666;
+    padding: 14px 24px;
+    color: #595959;
     text-decoration: none;
-    transition: all 0.3s;
+    transition: all 0.2s ease;
     border-right: 3px solid transparent;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 20px;
+    position: relative;
 }
 
 .sidebar ul li a:hover {
     background-color: #f5f5f5;
-    color: #1890ff;
+    color: #333;
 }
 
 .sidebar ul li a.active {
-    background-color: #e6f7ff;
-    color: #1890ff;
-    border-right-color: #1890ff;
+    background-color: #1677ff;
+    color: white;
+    border-right-color: #1677ff;
     font-weight: 500;
+}
+
+.sidebar ul li a.active:hover {
+    background-color: #4096ff;
+    color: white;
 }
 
 /* 右侧内容区 */
@@ -250,57 +287,80 @@ body {
 /* 卡片样式 */
 .card {
     background-color: white;
-    border-radius: 4px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.09);
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     padding: 24px;
     margin-bottom: 24px;
-    transition: all 0.3s;
+    transition: all 0.2s ease;
 }
 
 .card:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    transform: translateY(-1px);
 }
 
 .card-title {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 500;
     color: #333;
-    margin-bottom: 16px;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* 系统信息卡片样式 */
+.card p {
+    margin-bottom: 12px;
+    line-height: 1.6;
+    color: #595959;
+}
+
+.card strong {
+    display: inline-block;
+    min-width: 100px;
+    color: #333;
+    font-weight: 500;
+}
+
+.card .status-success {
+    color: #52c41a;
+    font-weight: 500;
 }
 
 /* 统计卡片样式 */
 .stat-card {
     background-color: white;
-    border-radius: 4px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.09);
-    padding: 20px;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 24px;
     margin-bottom: 24px;
     text-align: center;
-    transition: all 0.3s;
+    transition: all 0.2s ease;
 }
 
 .stat-card:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.14);
     transform: translateY(-2px);
 }
 
 .stat-value {
-    font-size: 32px;
+    font-size: 36px;
     font-weight: 600;
-    color: #1890ff;
-    margin: 10px 0;
+    color: #1677ff;
+    margin: 12px 0 8px;
 }
 
 .stat-label {
     font-size: 14px;
-    color: #666;
+    color: #595959;
+    font-weight: 400;
 }
 
 /* 表格样式 */
 .table-container {
     background-color: white;
-    border-radius: 4px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.09);
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     overflow: hidden;
     margin-bottom: 24px;
 }
@@ -311,27 +371,60 @@ table {
 }
 
 table th, table td {
-    padding: 12px 16px;
+    padding: 14px 20px;
     text-align: left;
     border-bottom: 1px solid #f0f0f0;
-}
-
-table th {
-    background-color: #fafafa;
-    font-weight: 500;
-    color: #333;
     font-size: 14px;
 }
 
-table tr:hover {
+table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: #333;
+    font-size: 14px;
+    border-bottom: 2px solid #e8e8e8;
+}
+
+table td {
+    color: #595959;
+    font-weight: 400;
+}
+
+table tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+table tbody tr:nth-child(even) {
+    background-color: #fafafa;
+}
+
+table tbody tr:hover {
     background-color: #f5f5f5;
+}
+
+table tbody tr:nth-child(even):hover {
+    background-color: #f0f0f0;
+}
+
+/* 表格操作按钮样式 */
+table .btn {
+    padding: 6px 12px;
+    height: 30px;
+    line-height: 18px;
+    min-width: 60px;
+    font-size: 13px;
+    margin-right: 8px;
+}
+
+table .btn:last-child {
+    margin-right: 0;
 }
 
 /* 表单样式 */
 .form-container {
     background-color: white;
-    border-radius: 4px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.09);
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     padding: 24px;
     margin-bottom: 24px;
 }
@@ -340,30 +433,72 @@ table tr:hover {
     margin-bottom: 16px;
 }
 
+.form-row:last-child {
+    text-align: center;
+    margin-top: 24px;
+}
+
 .form-row label {
     display: block;
     margin-bottom: 8px;
     font-weight: 500;
     color: #333;
+    font-size: 14px;
+    line-height: 20px;
 }
 
 .form-row input,
 .form-row select,
 .form-row textarea {
     width: 100%;
-    padding: 8px 12px;
+    padding: 10px 14px;
     border: 1px solid #d9d9d9;
-    border-radius: 4px;
+    border-radius: 6px;
     font-size: 14px;
-    transition: all 0.3s;
+    transition: all 0.2s ease;
+    background-color: white;
+    color: #333;
+    line-height: 20px;
+}
+
+.form-row input:hover,
+.form-row select:hover,
+.form-row textarea:hover {
+    border-color: #bfbfbf;
 }
 
 .form-row input:focus,
 .form-row select:focus,
 .form-row textarea:focus {
     outline: none;
-    border-color: #1890ff;
-    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+    border-color: #1677ff;
+    box-shadow: 0 0 0 3px rgba(22, 119, 255, 0.15);
+}
+
+.form-row input::placeholder,
+.form-row select::placeholder,
+.form-row textarea::placeholder {
+    color: #bfbfbf;
+}
+
+/* 表单分组样式 */
+.form-section {
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.form-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.form-section h3 {
+    margin-bottom: 16px;
+    color: #333;
+    font-size: 16px;
+    font-weight: 500;
 }
 
 .form-row .btn {
@@ -372,23 +507,55 @@ table tr:hover {
 
 /* 按钮样式 */
 .btn-secondary {
-    background-color: #f0f0f0;
-    color: #333;
+    background-color: white;
+    color: #666;
     border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    height: 34px;
+    min-width: 120px;
+    padding: 0 16px;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 32px; /* 考虑边框高度，保持垂直居中 */
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    white-space: nowrap;
 }
 
 .btn-secondary:hover {
-    background-color: #e6e6e6;
+    background-color: #f5f5f5;
     border-color: #bfbfbf;
 }
 
 .btn-danger {
     background-color: #ff4d4f;
     color: white;
+    border: none;
+    border-radius: 6px;
+    box-shadow: 0 2px 6px rgba(255, 77, 79, 0.4);
+    height: 34px;
+    min-width: 80px;
+    padding: 0 16px;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 34px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    white-space: nowrap;
 }
 
 .btn-danger:hover {
     background-color: #ff7875;
+    box-shadow: 0 4px 12px rgba(255, 77, 79, 0.5);
+}
+
+.btn-danger:active {
+    background-color: #d9363e;
+    box-shadow: 0 1px 4px rgba(255, 77, 79, 0.6);
 }
 
 .btn-success {
@@ -407,6 +574,27 @@ table tr:hover {
 
 .btn-warning:hover {
     background-color: #ffc53d;
+}
+
+/* 按钮大小 - 参考elementui */
+.btn-large {
+    height: 34px;
+    padding: 0 16px;
+    font-size: 14px;
+    line-height: 34px;
+    border-radius: 4px;
+}
+
+/* 按钮容器 */
+.button-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 24px;
+    justify-content: center;
+}
+
+.button-group .btn {
+    flex: none;
 }
 
 /* 响应式设计 */
@@ -434,11 +622,15 @@ table tr:hover {
     .sidebar ul li a {
         border-right: none;
         border-bottom: 3px solid transparent;
+        padding: 12px 16px;
+        font-size: 13px;
     }
     
     .sidebar ul li a.active {
         border-right: none;
-        border-bottom-color: #1890ff;
+        border-bottom-color: #1677ff;
+        background-color: #1677ff;
+        color: white;
     }
     
     .content {
@@ -451,5 +643,57 @@ table tr:hover {
     
     .header h1 {
         font-size: 16px;
+    }
+    
+    .header .btn-logout {
+        padding: 6px 12px;
+        font-size: 13px;
+        height: 32px;
+    }
+    
+    .button-group {
+        flex-direction: column;
+        gap: 8px;
+        align-items: stretch;
+        justify-content: flex-start;
+    }
+    
+    .button-group .btn {
+        width: 100%;
+    }
+    
+    .stat-card {
+        padding: 20px;
+    }
+    
+    .stat-value {
+        font-size: 28px;
+    }
+    
+    .card {
+        padding: 20px;
+    }
+    
+    .form-row input,
+    .form-row select,
+    .form-row textarea {
+        padding: 12px 14px;
+    }
+    
+    .dashboard-cards {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .table-container {
+        overflow-x: auto;
+    }
+    
+    table {
+        min-width: 600px;
+    }
+    
+    .settings-card {
+        max-height: calc(100vh - 150px);
     }
 }
