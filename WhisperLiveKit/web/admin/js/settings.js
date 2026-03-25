@@ -205,39 +205,3 @@ window.addEventListener('load', async function() {
 
 
 
-// 修改resetSettings函数
-async function resetSettings() {
-    if (!confirm('确定要重置为默认值吗？')) {
-        return;
-    }
-
-    try {
-        const response = await fetchWithAuth('/api/settings/reset', {
-            method: 'POST'
-        });
-
-        if (response && response.ok) {
-            const result = await response.json();
-            loadSettings();
-            document.getElementById('settings-message').textContent = '重置成功，需要重启服务才能生效';
-            document.getElementById('settings-message').className = 'message success';
-            
-            // 显示重启按钮
-            if (result.restart_required) {
-                showRestartButton();
-            }
-            
-            setTimeout(() => {
-                document.getElementById('settings-message').textContent = '';
-                document.getElementById('settings-message').className = 'message';
-            }, 3000);
-        } else {
-            document.getElementById('settings-message').textContent = '重置失败';
-            document.getElementById('settings-message').className = 'message error';
-        }
-    } catch (error) {
-        console.error('重置设置错误:', error);
-        document.getElementById('settings-message').textContent = '重置失败';
-        document.getElementById('settings-message').className = 'message error';
-    }
-}

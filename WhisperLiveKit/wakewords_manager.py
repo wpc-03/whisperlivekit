@@ -309,14 +309,18 @@ class WakewordsManager:
             result = subprocess.run(
                 cmd,
                 capture_output=True,
-                text=True,
-                encoding='utf-8',
                 cwd=str(Path(__file__).parent.parent)
             )
             
             if result.returncode != 0:
-                logger.error(f"Conversion failed, return code: {result.returncode}")
-                logger.error(f"Error output: {result.stderr}")
+                # 处理可能的编码错误
+                try:
+                    stderr = result.stderr.decode('utf-8', errors='replace')
+                    logger.error(f"Conversion failed, return code: {result.returncode}")
+                    logger.error(f"Error output: {stderr}")
+                except Exception as e:
+                    logger.error(f"Conversion failed, return code: {result.returncode}")
+                    logger.error(f"Failed to decode error output: {e}")
                 return False
             
             logger.info(f"Conversion successful, output file: {self.keywords_file}")

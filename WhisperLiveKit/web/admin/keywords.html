@@ -16,48 +16,53 @@
             </div>
         </div>
         
-        <div class="sidebar">
-            <h3>功能导航</h3>
-            <ul>
-                <li><a href="dashboard.html">控制台</a></li>
-                <li><a href="keywords.html" class="active">专业术语管理</a></li>
-                <li><a href="settings.html">参数设置</a></li>
-                <li><a href="wakewords.html">唤醒词管理</a></li>
-            </ul>
-        </div>
-        
-        <div class="content">
-            <h2>专业术语管理</h2>
-            
-            <div class="form-container">
-                <h3>添加专业术语</h3>
-                <form id="add-keyword-form">
-                    <div class="form-row">
-                        <label for="new-keyword">术语</label>
-                        <input type="text" id="new-keyword" name="keyword" required>
-                    </div>
-                    <div class="form-row">
-                        <button type="submit" class="btn btn-primary">添加</button>
-                    </div>
-                </form>
-                <div id="add-message" class="message"></div>
+        <div class="main-content">
+            <div class="sidebar">
+                <h3>功能导航</h3>
+                <ul>
+                    <li><a href="dashboard.html">控制台</a></li>
+                    <li><a href="keywords.html" class="active">专业术语管理</a></li>
+                    <li><a href="settings.html">参数设置</a></li>
+                    <li><a href="wakewords.html">唤醒词管理</a></li>
+                    <li><a href="sdk-guide.html">WhisperLiveKit Web SDK 使用手册</a></li>
+                </ul>
             </div>
             
-            <div class="table-container">
-                <h3>术语列表</h3>
-                <table id="keywords-table">
-                    <thead>
-                        <tr>
-                            <th>术语</th>
-                            <th>操作</th>
-                        </tr>
-                    </thead>
-                    <tbody id="keywords-list">
-                        <tr>
-                            <td colspan="2">加载中...</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div class="content">
+                <h2>专业术语管理</h2>
+                
+                <div class="card">
+                    <div class="card-title">添加专业术语</div>
+                    <form id="add-keyword-form">
+                        <div class="form-row">
+                            <label for="new-keyword">术语</label>
+                            <input type="text" id="new-keyword" name="keyword" placeholder="请输入专业术语" required>
+                        </div>
+                        <div class="form-row">
+                            <button type="submit" class="btn btn-primary">添加</button>
+                        </div>
+                    </form>
+                    <div id="add-message" class="message"></div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-title">术语列表</div>
+                    <div class="table-container">
+                        <table id="keywords-table">
+                            <thead>
+                                <tr>
+                                    <th>术语</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="keywords-list">
+                                <tr>
+                                    <td colspan="2" style="text-align: center; padding: 40px;">加载中...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

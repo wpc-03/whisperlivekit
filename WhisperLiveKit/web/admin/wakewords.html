@@ -16,65 +16,65 @@
             </div>
         </div>
         
-        <div class="sidebar">
-            <h3>功能导航</h3>
-            <ul>
-                <li><a href="dashboard.html">控制台</a></li>
-                <li><a href="keywords.html">专业术语管理</a></li>
-                <li><a href="settings.html">参数设置</a></li>
-                <li><a href="wakewords.html" class="active">唤醒词管理</a></li>
-            </ul>
-        </div>
-        
-        <div class="content">
-            <h2>唤醒词管理</h2>
-            
-            <div class="form-container">
-                <h3>添加唤醒词</h3>
-                <form id="add-wakeword-form">
-                    <div class="form-row">
-                        <label for="new-word">唤醒词</label>
-                        <input type="text" id="new-word" name="word" required>
-                    </div>
-                    <div class="form-row">
-                        <label for="new-boost">Boost值 (可选)</label>
-                        <input type="number" id="new-boost" name="boost" min="0" step="0.1" placeholder="例如: 2.0">
-                    </div>
-                    <div class="form-row">
-                        <label for="new-threshold">Threshold值 (可选)</label>
-                        <input type="number" id="new-threshold" name="threshold" min="0" max="1" step="0.1" placeholder="例如: 0.5">
-                    </div>
-                    <div class="form-row">
-                        <button type="submit" class="btn btn-primary">添加</button>
-                    </div>
-                </form>
-                <div id="add-message" class="message"></div>
+        <div class="main-content">
+            <div class="sidebar">
+                <h3>功能导航</h3>
+                <ul>
+                    <li><a href="dashboard.html">控制台</a></li>
+                    <li><a href="keywords.html">专业术语管理</a></li>
+                    <li><a href="settings.html">参数设置</a></li>
+                    <li><a href="wakewords.html" class="active">唤醒词管理</a></li>
+                    <li><a href="sdk-guide.html">WhisperLiveKit Web SDK 使用手册</a></li>
+                </ul>
             </div>
             
-            <div class="form-container">
-                <h3>唤醒词转换</h3>
-                <p>将keywords_raw.txt转换为keywords.txt格式，供唤醒词检测服务使用</p>
-                <button id="btn-convert" class="btn btn-secondary">执行转换</button>
-                <div id="convert-message" class="message"></div>
-            </div>
-            
-            <div class="table-container">
-                <h3>唤醒词列表</h3>
-                <table id="wakewords-table">
-                    <thead>
-                        <tr>
-                            <th>唤醒词</th>
-                            <th>Boost值</th>
-                            <th>Threshold值</th>
-                            <th>操作</th>
-                        </tr>
-                    </thead>
-                    <tbody id="wakewords-list">
-                        <tr>
-                            <td colspan="4">加载中...</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div class="content">
+                <h2>唤醒词管理</h2>
+                
+                <div class="card">
+                    <div class="card-title">添加唤醒词</div>
+                    <form id="add-wakeword-form">
+                        <div class="form-row">
+                            <label for="new-word">唤醒词</label>
+                            <input type="text" id="new-word" name="word" placeholder="请输入唤醒词" required>
+                        </div>
+                        <div class="form-row">
+                            <label for="new-boost">Boost值 (可选)</label>
+                            <input type="number" id="new-boost" name="boost" min="0" step="0.1" placeholder="例如: 2.0">
+                        </div>
+                        <div class="form-row">
+                            <label for="new-threshold">Threshold值 (可选)</label>
+                            <input type="number" id="new-threshold" name="threshold" min="0" max="1" step="0.1" placeholder="例如: 0.5">
+                        </div>
+                        <div class="form-row">
+                            <button type="submit" class="btn btn-primary">添加</button>
+                        </div>
+                    </form>
+                    <div id="add-message" class="message"></div>
+                </div>
+                
+
+                
+                <div class="card">
+                    <div class="card-title">唤醒词列表</div>
+                    <div class="table-container">
+                        <table id="wakewords-table">
+                            <thead>
+                                <tr>
+                                    <th>唤醒词</th>
+                                    <th>Boost值</th>
+                                    <th>Threshold值</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="wakewords-list">
+                                <tr>
+                                    <td colspan="4" style="text-align: center; padding: 40px;">加载中...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

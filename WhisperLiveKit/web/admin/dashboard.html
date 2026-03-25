@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WhisperLiveKit 管理系统 - 控制台</title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        .dashboard-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -16,30 +24,46 @@
             </div>
         </div>
         
-        <div class="sidebar">
-            <h3>功能导航</h3>
-            <ul>
-                <li><a href="dashboard.html" class="active">控制台</a></li>
-                <li><a href="keywords.html">专业术语管理</a></li>
-                <li><a href="settings.html">参数设置</a></li>
-                <li><a href="wakewords.html">唤醒词管理</a></li>
-            </ul>
-        </div>
-        
-        <div class="content">
-            <h2>系统概览</h2>
-            <div class="dashboard-cards">
-                <div class="card">
-                    <h3>系统状态</h3>
-                    <p>服务运行正常</p>
+        <div class="main-content">
+            <div class="sidebar">
+                <h3>功能导航</h3>
+                <ul>
+                    <li><a href="dashboard.html" class="active">控制台</a></li>
+                    <li><a href="keywords.html">专业术语管理</a></li>
+                    <li><a href="settings.html">参数设置</a></li>
+                    <li><a href="wakewords.html">唤醒词管理</a></li>
+                    <li><a href="sdk-guide.html">WhisperLiveKit Web SDK 使用手册</a></li>
+                </ul>
+            </div>
+            
+            <div class="content">
+                <h2>系统概览</h2>
+                <div class="dashboard-cards">
+                    <div class="stat-card">
+                        <div class="stat-label">系统状态</div>
+                        <div class="stat-value">正常</div>
+                        <div class="stat-label">服务运行中</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">专业术语</div>
+                        <div class="stat-value" id="keywords-count">0</div>
+                        <div class="stat-label">个术语</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">唤醒词</div>
+                        <div class="stat-value" id="wakewords-count">0</div>
+                        <div class="stat-label">个唤醒词</div>
+                    </div>
                 </div>
+                
                 <div class="card">
-                    <h3>专业术语</h3>
-                    <p id="keywords-count">加载中...</p>
-                </div>
-                <div class="card">
-                    <h3>唤醒词</h3>
-                    <p id="wakewords-count">加载中...</p>
+                    <div class="card-title">系统信息</div>
+                    <div style="line-height: 2;">
+                        <p><strong>服务版本：</strong>WhisperLiveKit v1.0</p>
+                        <p><strong>运行状态：</strong><span style="color: #52c41a;">正常</span></p>
+                        <p><strong>API地址：</strong>http://localhost:8000</p>
+                        <p><strong>管理地址：</strong>http://localhost:8000/admin</p>
+                    </div>
                 </div>
             </div>
         </div>

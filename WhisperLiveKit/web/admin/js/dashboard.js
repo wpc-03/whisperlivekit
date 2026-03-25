@@ -14,13 +14,13 @@ async function loadKeywordsCount() {
         const response = await fetchWithAuth('/api/keywords');
         if (response && response.ok) {
             const keywords = await response.json();
-            document.getElementById('keywords-count').textContent = `共 ${keywords.length} 个术语`;
+            document.getElementById('keywords-count').textContent = keywords.length;
         } else {
-            document.getElementById('keywords-count').textContent = '加载失败';
+            document.getElementById('keywords-count').textContent = '0';
         }
     } catch (error) {
         console.error('加载专业术语数量错误:', error);
-        document.getElementById('keywords-count').textContent = '加载失败';
+        document.getElementById('keywords-count').textContent = '0';
     }
 }
 
@@ -30,13 +30,13 @@ async function loadWakewordsCount() {
         const response = await fetchWithAuth('/api/wakewords');
         if (response && response.ok) {
             const wakewords = await response.json();
-            document.getElementById('wakewords-count').textContent = `共 ${wakewords.length} 个唤醒词`;
+            document.getElementById('wakewords-count').textContent = wakewords.length;
         } else {
-            document.getElementById('wakewords-count').textContent = '加载失败';
+            document.getElementById('wakewords-count').textContent = '0';
         }
     } catch (error) {
         console.error('加载唤醒词数量错误:', error);
-        document.getElementById('wakewords-count').textContent = '加载失败';
+        document.getElementById('wakewords-count').textContent = '0';
     }
 }
 

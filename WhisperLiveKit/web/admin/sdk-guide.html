@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhisperLiveKit 管理系统 - Web SDK 使用手册</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .pdf-container {
+            width: 100%;
+            height: 80vh;
+            border: 1px solid #e8e8e8;
+            border-radius: 4px;
+        }
+        .download-section {
+            margin-top: 20px;
+        }
+        .download-card {
+            background-color: #fafafa;
+            padding: 20px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .download-card h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #1890ff;
+        }
+        .download-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .download-link {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: #1890ff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .download-link:hover {
+            background-color: #40a9ff;
+        }
+        .download-link svg {
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>WhisperLiveKit 管理系统</h1>
+            <div class="user-info">
+                <span id="username">加载中...</span>
+                <button id="btn-logout" class="btn-logout">登出</button>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="sidebar">
+                <h3>功能导航</h3>
+                <ul>
+                    <li><a href="dashboard.html">控制台</a></li>
+                    <li><a href="keywords.html">专业术语管理</a></li>
+                    <li><a href="settings.html">参数设置</a></li>
+                    <li><a href="wakewords.html">唤醒词管理</a></li>
+                    <li><a href="sdk-guide.html" class="active">WhisperLiveKit Web SDK 使用手册</a></li>
+                </ul>
+            </div>
+            
+            <div class="content">
+                <h2>WhisperLiveKit Web SDK 使用手册</h2>
+                
+                <div class="card">
+                    <div class="card-title">文档预览</div>
+                    <iframe class="pdf-container" src="/web/docs/WEB_SDK_GUIDE.pdf" frameborder="0"></iframe>
+                </div>
+                
+                <div class="download-section">
+                    <div class="card download-card">
+                        <h3>下载资源</h3>
+                        <p>点击下方链接下载完整的SDK包，包含所有文档和SDK文件：</p>
+                        <div class="download-links">
+                            <a href="/web/download/sdk.zip" class="download-link" download>📦 下载完整 SDK 包</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="js/auth.js"></script>
+    <script>
+        // 页面加载时获取用户信息
+        window.addEventListener('load', async function() {
+            if (isLoggedIn()) {
+                const user = await getCurrentUser();
+                if (user) {
+                    document.getElementById('username').textContent = user.username;
+                } else {
+                    document.getElementById('username').textContent = '用户';
+                }
+            }
+        });
+    </script>
+</body>
+</html>

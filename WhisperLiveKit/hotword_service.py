@@ -5,6 +5,8 @@ Hotword detection service for WebSocket endpoints
 
 import logging
 import os
+import time
+import threading
 from typing import Optional, Dict, Any
 import numpy as np
 import sherpa_onnx
@@ -56,8 +58,19 @@ class HotwordService:
         self.kws: Optional[sherpa_onnx.KeywordSpotter] = None
         self.kws_streams: Dict[str, Any] = {}  # 每个WebSocket连接一个流
         
+        # 文件监控相关
+        self.keywords_file_mtime = 0
+        self.file_monitor_thread: Optional[threading.Thread] = None
+        self.is_running = False
+        self._update_file_mtime()
+        
         # 初始化模型
         self._initialize_model()
+        
+        # 启动文件监控线程
+        self.is_running = True
+        self.file_monitor_thread = threading.Thread(target=self._monitor_keywords_file, daemon=True)
+        self.file_monitor_thread.start()
     
     def _initialize_model(self) -> bool:
         """初始化KWS模型"""
@@ -168,6 +181,76 @@ class HotwordService:
         except Exception as e:
             logger.error(f"处理音频数据失败: {e}")
             return None
+    
+    def _update_file_mtime(self) -> None:
+        """更新关键词文件的最后修改时间"""
+        try:
+            if os.path.exists(self.keywords_file):
+                self.keywords_file_mtime = os.path.getmtime(self.keywords_file)
+                logger.info(f"更新关键词文件修改时间: {self.keywords_file_mtime}")
+        except Exception as e:
+            logger.error(f"更新文件修改时间失败: {e}")
+    
+    def _monitor_keywords_file(self) -> None:
+        """监控关键词文件的变化"""
+        logger.info("启动关键词文件监控线程")
+        
+        while self.is_running:
+            try:
+                if os.path.exists(self.keywords_file):
+                    current_mtime = os.path.getmtime(self.keywords_file)
+                    if current_mtime > self.keywords_file_mtime:
+                        logger.info(f"检测到关键词文件变化，重新加载KWS模型")
+                        self._reload_model()
+                        self._update_file_mtime()
+                time.sleep(2)  # 每2秒检查一次
+            except Exception as e:
+                logger.error(f"文件监控异常: {e}")
+                time.sleep(2)
+        
+        logger.info("关键词文件监控线程结束")
+    
+    def _reload_model(self) -> bool:
+        """重新加载KWS模型"""
+        try:
+            logger.info("正在重新加载KWS模型...")
+            
+            # 停止当前的KWS实例
+            if self.kws:
+                del self.kws
+                self.kws = None
+                # 清空所有流
+                self.kws_streams.clear()
+                logger.info("已停止当前KWS实例和所有流")
+            
+            # 重新初始化KWS模型
+            success = self._initialize_model()
+            
+            if success:
+                logger.info("KWS模型重新加载成功")
+            else:
+                logger.error("KWS模型重新加载失败")
+            
+            return success
+        except Exception as e:
+            logger.error(f"重新加载KWS模型失败: {e}")
+            return False
+    
+    def stop(self) -> None:
+        """停止服务"""
+        logger.info("正在停止唤醒词检测服务...")
+        
+        self.is_running = False
+        
+        # 清空所有流
+        self.kws_streams.clear()
+        
+        # 停止当前的KWS实例
+        if self.kws:
+            del self.kws
+            self.kws = None
+        
+        logger.info("唤醒词检测服务已停止")
     
     def get_stats(self) -> Dict[str, Any]:
         """获取服务统计信息"""
