@@ -26,6 +26,50 @@ async function loadSettings() {
     }
 }
 
+// 根据选择的模型类型自动更新模型路径
+function updateModelPathBasedOnSelection() {
+    const modelSelect = document.getElementById('model');
+    const modelPathInput = document.getElementById('model_path');
+    
+    if (!modelSelect || !modelPathInput) return;
+    
+    const selectedModel = modelSelect.value;
+    let modelPath = modelPathInput.value;
+    
+    // 如果模型路径为空，使用默认路径
+    if (!modelPath || modelPath.trim() === '') {
+        modelPath = '/app/models/models--Systran--faster-whisper-tiny';
+        modelPathInput.value = modelPath;
+    }
+    
+    // 替换路径中的模型名称部分
+    // 支持多种路径格式：
+    // 1. /app/models/models--Systran--faster-whisper-tiny
+    // 2. D:/python/FastWhisperTranscriber/model/models--Systran--faster-whisper-tiny
+    // 3. models--Systran--faster-whisper-tiny
+    
+    // 查找 "faster-whisper-" 在路径中的位置（这是模型路径的固定部分）
+    const searchPattern = 'faster-whisper-';
+    const searchIndex = modelPath.lastIndexOf(searchPattern);
+    
+    if (searchIndex !== -1) {
+        // 找到了固定模式，替换后面的模型类型
+        const basePath = modelPath.substring(0, searchIndex + searchPattern.length);
+        modelPathInput.value = basePath + selectedModel;
+    } else {
+        // 如果没有找到固定模式，尝试查找最后一个 "-" 的位置
+        const lastHyphenIndex = modelPath.lastIndexOf('-');
+        if (lastHyphenIndex !== -1) {
+            // 获取最后一个 "-" 之前的部分
+            const basePath = modelPath.substring(0, lastHyphenIndex + 1); // 包含 "-"
+            modelPathInput.value = basePath + selectedModel;
+        } else {
+            // 如果没有找到 "-"，直接附加模型名称
+            modelPathInput.value = modelPath + '-' + selectedModel;
+        }
+    }
+}
+
 // 填充设置表单
 function populateSettingsForm(settings) {
     // 服务设置
@@ -49,6 +93,9 @@ function populateSettingsForm(settings) {
     if (settings.model_path) {
         document.getElementById('model_path').value = settings.model_path;
     }
+    // 填充后，确保模型路径与选择的模型类型一致
+    updateModelPathBasedOnSelection();
+    
     if (settings.language) {
         document.getElementById('language').value = settings.language;
     }
@@ -185,6 +232,12 @@ window.addEventListener('load', async function() {
     
     // 加载设置
     await loadSettings();
+    
+    // 添加模型选择change事件监听器，自动更新模型路径
+    const modelSelect = document.getElementById('model');
+    if (modelSelect) {
+        modelSelect.addEventListener('change', updateModelPathBasedOnSelection);
+    }
     
     // 保存设置表单处理
     document.getElementById('settings-form').addEventListener('submit', async function(e) {

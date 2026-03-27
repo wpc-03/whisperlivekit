@@ -27,7 +27,7 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - HF_HOME=/app/models
-      - TRANSFORMERS_CACHE=/app/models
+      # - TRANSFORMERS_CACHE=/app/models
       - KEYWORDS_FILE=/app/keywords.txt
     restart: unless-stopped
     # healthcheck:

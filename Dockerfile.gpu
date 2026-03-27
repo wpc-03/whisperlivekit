@@ -24,7 +24,9 @@ RUN sed -i 's@http://.*.ubuntu.com@http://mirrors.aliyun.com@g' /etc/apt/sources
         git \
         build-essential \
         python3-dev \
-        ca-certificates && \
+        ca-certificates \
+        portaudio19-dev \
+        libasound2-dev && \
     rm -rf /var/lib/apt/lists/*
 
 RUN python3 -m venv /opt/venv
@@ -54,6 +56,12 @@ RUN ln -s /app/WhisperLiveKit /app/whisperlivekit
 
 # Install WhisperLiveKit from local source (includes our modifications)
 RUN pip install --no-cache-dir --default-timeout=1000 -e .[chinese_conversion]
+
+# Install additional dependencies from requirements.txt
+RUN pip install --no-cache-dir --default-timeout=1000 -r requirements.txt
+
+# Install sherpa-onnx for hotword detection
+RUN pip install --no-cache-dir --default-timeout=1000 sherpa-onnx
 
 # Install OpenCC for better Chinese conversion quality
 RUN pip install opencc-python-reimplemented

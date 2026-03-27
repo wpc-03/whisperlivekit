@@ -9,13 +9,13 @@ ENV PIP_EXTRA_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/
 
 WORKDIR /app
 
-# Install ffmpeg and git (needed for NeMo)
+# Install ffmpeg, git and audio libraries (needed for NeMo and sounddevice)
 RUN echo "deb http://mirrors.aliyun.com/debian/ bookworm main non-free non-free-firmware contrib" > /etc/apt/sources.list && \
     echo "deb http://mirrors.aliyun.com/debian/ bookworm-updates main non-free non-free-firmware contrib" >> /etc/apt/sources.list && \
     echo "deb http://mirrors.aliyun.com/debian/ bookworm-backports main non-free non-free-firmware contrib" >> /etc/apt/sources.list && \
     echo "deb http://mirrors.aliyun.com/debian-security bookworm-security main non-free non-free-firmware contrib" >> /etc/apt/sources.list && \
     apt-get update -o Acquire::http::Timeout=300 -o Acquire::https::Timeout=300 && \
-    apt-get install -y --no-install-recommends ffmpeg git && \
+    apt-get install -y --no-install-recommends ffmpeg git portaudio19-dev libasound2-dev && \
     rm -rf /var/lib/apt/lists/*
 
 # Install CPU-only PyTorch with retry and timeout (matching local environment)
@@ -38,6 +38,12 @@ RUN ln -s /app/WhisperLiveKit /app/whisperlivekit
 
 # Install WhisperLiveKit from local source (includes our modifications)
 RUN pip install --no-cache-dir --default-timeout=1000 -e .[chinese_conversion]
+
+# Install additional dependencies from requirements.txt
+RUN pip install --no-cache-dir --default-timeout=1000 -r requirements.txt
+
+# Install sherpa-onnx for hotword detection
+RUN pip install --no-cache-dir --default-timeout=1000 sherpa-onnx
 
 # Install OpenCC for better Chinese conversion quality
 RUN pip install opencc-python-reimplemented

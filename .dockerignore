@@ -1,0 +1,47 @@
+# 虚拟环境
+venv/
+.env/
+.venv/
+
+# 版本控制
+.git/
+.gitignore
+
+# 构建产物
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# 模型文件（通过volume挂载）
+models/
+model/
+
+# 其他大型文件
+*.tar
+*.tar.gz
+*.wav
+*.mp3
+
+# IDE文件
+.vscode/
+.idea/
+
+# 日志文件
+logs/
+*.log
+
+# 配置文件
+.env.local
+.env.*.local
+
+# 测试文件
+test/
+
+# 文档
+*.md
+*.rst
+
+# 临时文件
+*.tmp
+*.temp

@@ -696,7 +696,8 @@ client.stop();</pre>
             
             modeSelect.addEventListener('change', async function() {
                 if (this.value === 'hotword') {
-                    thresholdGroup.style.display = 'block';
+                    // thresholdGroup.style.display = 'block';
+                    thresholdGroup.style.display = 'none';
                     // 更新状态显示为唤醒词模式
                     updateStatus('唤醒词模式：正在启动唤醒词检测...', 'info');
                     updateStateIndicator('hotword', 'HOTWORD MODE');

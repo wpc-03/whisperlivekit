@@ -7,7 +7,7 @@ from datetime import timedelta
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, HTTPException, status, Form
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import OAuth2PasswordRequestForm
 
@@ -93,16 +93,39 @@ app.add_middleware(
 
 # 挂载静态文件目录
 web_dir = pathlib.Path(webpkg.__file__).parent
-app.mount("/web", StaticFiles(directory=str(web_dir)), name="web")
+app.mount("/web", StaticFiles(directory=str(web_dir), html=True), name="web")
 
 # 挂载管理系统静态文件目录
 admin_dir = web_dir / "admin"
 if admin_dir.exists():
-    app.mount("/admin", StaticFiles(directory=str(admin_dir)), name="admin")
+    app.mount("/admin", StaticFiles(directory=str(admin_dir), html=True), name="admin")
 
 @app.get("/")
 async def get():
     return HTMLResponse(get_inline_ui_html())
+
+# 在下载路由中添加异常处理
+@app.get("/web/download/sdk.zip")
+async def download_sdk():
+    try:
+        sdk_path = web_dir / "download" / "sdk.zip"
+        if not sdk_path.exists():
+            raise HTTPException(status_code=404, detail="SDK文件不存在")
+        
+        return FileResponse(
+            path=str(sdk_path),
+            filename="WhisperLiveKit-Web-SDK.zip",
+            media_type="application/zip",
+            headers={
+                "Content-Disposition": "attachment; filename=WhisperLiveKit-Web-SDK.zip",
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0"
+            }
+        )
+    except Exception as e:
+        logger.warning(f"下载过程中发生异常: {e}")
+        raise
 
 # 认证相关接口
 @app.post("/api/auth/login")
