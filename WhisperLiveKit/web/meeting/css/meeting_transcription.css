@@ -1,0 +1,789 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    background: linear-gradient(135deg, #e8e9ff 0%, #f0f4ff 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.transcription-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    position: relative;
+}
+
+.transcription-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 32px;
+    background: linear-gradient(135deg, #e8e9ff 0%, #f0f4ff 100%);
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.btn-back {
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #374151;
+    transition: all 0.2s ease;
+}
+
+.btn-back:hover {
+    background: white;
+    transform: translateX(-2px);
+}
+
+.meeting-info {
+    flex: 1;
+    margin: 0 24px;
+    min-width: 0;
+}
+
+.meeting-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 12px;
+}
+
+.meeting-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: center;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.meta-item svg {
+    flex-shrink: 0;
+}
+
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.status-recording {
+    background-color: #e6f7ff;
+    color: #1890ff;
+}
+
+.status-paused {
+    background-color: #fffbe6;
+    color: #faad14;
+}
+
+.header-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.action-btn {
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #374151;
+    transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+    background: white;
+    transform: scale(1.05);
+}
+
+.action-btn-primary {
+    background: #6366f1;
+    color: white;
+}
+
+.action-btn-primary:hover {
+    background: #4f46e5;
+}
+
+.transcription-content {
+    padding: 32px;
+    max-height: calc(100vh - 280px);
+    overflow-y: auto;
+}
+
+.transcription-list {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.transcription-item {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.speaker-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.speaker-avatar {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.speaker-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.speaker-time {
+    font-size: 13px;
+    color: #9ca3af;
+}
+
+.transcription-text {
+    background: #f9fafb;
+    padding: 16px 20px;
+    border-radius: 12px;
+    font-size: 15px;
+    line-height: 1.8;
+    color: #374151;
+    margin-left: 48px;
+}
+
+
+
+.transcription-text-editing {
+    background: #6366f1;
+    color: white;
+}
+
+.recording-panel {
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    padding: 16px 24px;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    z-index: 100;
+}
+
+.recording-indicator {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.recording-wave {
+    position: relative;
+    width: 64px;
+    height: 64px;
+}
+
+.wave-circle {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    border-radius: 50%;
+    animation: pulse 2s ease-out infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1.5);
+        opacity: 0;
+    }
+}
+
+.recording-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.recording-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.recording-time {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.recording-controls {
+    display: flex;
+    gap: 12px;
+}
+
+.tooltip-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.tooltip {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 8px;
+    padding: 6px 12px;
+    background: #1f2937;
+    color: white;
+    font-size: 13px;
+    border-radius: 6px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    z-index: 1000;
+}
+
+.tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: #1f2937;
+}
+
+.tooltip-wrapper:hover .tooltip {
+    opacity: 1;
+    visibility: visible;
+}
+
+.control-btn {
+    width: 44px;
+    height: 36px;
+    border: none;
+    background: #f8f9ff;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.control-btn svg,
+.control-btn img {
+    width: 20px;
+    height: 20px;
+}
+
+.control-btn-stop {
+    color: #EB1B15;
+}
+
+.control-btn-stop svg,
+.control-btn-stop img {
+    color: #EB1B15;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+}
+
+.control-btn-stop:hover {
+    background: #EB1B15;
+}
+
+.control-btn-stop:hover svg,
+.control-btn-stop:hover img {
+    color: #FFFFFF;
+}
+
+.control-btn-pause {
+    color: #4080FF;
+}
+
+.control-btn-pause svg,
+.control-btn-pause img {
+    color: #4080FF;
+    fill: currentColor;
+}
+
+.control-btn-pause:hover {
+    background: #4080FF;
+}
+
+.control-btn-pause:hover svg,
+.control-btn-pause:hover img {
+    color: #FFFFFF;
+    fill: currentColor;
+}
+
+.recording-wave .recording-sprite {
+    width: 64px;
+    height: 64px;
+    background-image: url(img/record.png);
+    background-repeat: no-repeat;
+    background-position: 0 0;
+    animation-name: keyframes-recordingB;
+    animation-duration: 3.6s;
+    animation-delay: 0s;
+    animation-iteration-count: infinite;
+    animation-fill-mode: forwards;
+    animation-timing-function: steps(1);
+    opacity: 1;
+    transform: scale(1);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.recording-wave .recording-sprite.paused {
+    animation-play-state: paused;
+    background-image: url(img/pause.png) !important;
+    background-position: center center !important;
+    opacity: 0.9;
+    transform: scale(0.95);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+@keyframes keyframes-recordingB {
+    0% {
+        width: 64px;
+        height: 64px;
+        background-image: url(img/record.png);
+    }
+
+    1.11% {
+        background-position: -64px 0;
+    }
+
+    2.22% {
+        background-position: -128px 0;
+    }
+
+    3.33% {
+        background-position: -192px 0;
+    }
+
+    4.44% {
+        background-position: -256px 0;
+    }
+
+    5.56% {
+        background-position: -320px 0;
+    }
+
+    6.67% {
+        background-position: -384px 0;
+    }
+
+    7.78% {
+        background-position: -448px 0;
+    }
+
+    8.89% {
+        background-position: -512px 0;
+    }
+
+    10.00% {
+        background-position: -576px 0;
+    }
+
+    11.11% {
+        background-position: -640px 0;
+    }
+
+    12.22% {
+        background-position: -704px 0;
+    }
+
+    13.33% {
+        background-position: -768px 0;
+    }
+
+    14.44% {
+        background-position: -832px 0;
+    }
+
+    15.56% {
+        background-position: -896px 0;
+    }
+
+    16.67% {
+        background-position: -960px 0;
+    }
+
+    17.78% {
+        background-position: -1024px 0;
+    }
+
+    18.89% {
+        background-position: -1088px 0;
+    }
+
+    20.00% {
+        background-position: -1152px 0;
+    }
+
+    21.11% {
+        background-position: -1216px 0;
+    }
+
+    22.22% {
+        background-position: -1280px 0;
+    }
+
+    23.33% {
+        background-position: -1344px 0;
+    }
+
+    24.44% {
+        background-position: -1408px 0;
+    }
+
+    25.56% {
+        background-position: -1472px 0;
+    }
+
+    26.67% {
+        background-position: -1536px 0;
+    }
+
+    27.78% {
+        background-position: -1600px 0;
+    }
+
+    28.89% {
+        background-position: -1664px 0;
+    }
+
+    30.00% {
+        background-position: -1728px 0;
+    }
+
+    31.11% {
+        background-position: -1792px 0;
+    }
+
+    32.22% {
+        background-position: -1856px 0;
+    }
+
+    33.33% {
+        background-position: -1920px 0;
+    }
+
+    34.44% {
+        background-position: -1984px 0;
+    }
+
+    35.56% {
+        background-position: -2048px 0;
+    }
+
+    36.67% {
+        background-position: -2112px 0;
+    }
+
+    37.78% {
+        background-position: -2176px 0;
+    }
+
+    38.89% {
+        background-position: -2240px 0;
+    }
+
+    40.00% {
+        background-position: -2304px 0;
+    }
+
+    41.11% {
+        background-position: -2368px 0;
+    }
+
+    42.22% {
+        background-position: -2432px 0;
+    }
+
+    43.33% {
+        background-position: -2496px 0;
+    }
+
+    44.44% {
+        background-position: -2560px 0;
+    }
+
+    45.56% {
+        background-position: -2624px 0;
+    }
+
+    46.67% {
+        background-position: -2688px 0;
+    }
+
+    47.78% {
+        background-position: -2752px 0;
+    }
+
+    48.89% {
+        background-position: -2816px 0;
+    }
+
+    50.00% {
+        background-position: -2880px 0;
+    }
+
+    51.11% {
+        background-position: -2944px 0;
+    }
+
+    52.22% {
+        background-position: -3008px 0;
+    }
+
+    53.33% {
+        background-position: -3072px 0;
+    }
+
+    54.44% {
+        background-position: -3136px 0;
+    }
+
+    55.56% {
+        background-position: -3200px 0;
+    }
+
+    56.67% {
+        background-position: -3264px 0;
+    }
+
+    57.78% {
+        background-position: -3328px 0;
+    }
+
+    58.89% {
+        background-position: -3392px 0;
+    }
+
+    60.00% {
+        background-position: -3456px 0;
+    }
+
+    61.11% {
+        background-position: -3520px 0;
+    }
+
+    62.22% {
+        background-position: -3584px 0;
+    }
+
+    63.33% {
+        background-position: -3648px 0;
+    }
+
+    64.44% {
+        background-position: -3712px 0;
+    }
+
+    65.56% {
+        background-position: -3776px 0;
+    }
+
+    66.67% {
+        background-position: -3840px 0;
+    }
+
+    67.78% {
+        background-position: -3904px 0;
+    }
+
+    68.89% {
+        background-position: -3968px 0;
+    }
+
+    70.00% {
+        background-position: -4032px 0;
+    }
+
+    71.11% {
+        background-position: -4096px 0;
+    }
+
+    72.22% {
+        background-position: -4160px 0;
+    }
+
+    73.33% {
+        background-position: -4224px 0;
+    }
+
+    74.44% {
+        background-position: -4288px 0;
+    }
+
+    75.56% {
+        background-position: -4352px 0;
+    }
+
+    76.67% {
+        background-position: -4416px 0;
+    }
+
+    77.78% {
+        background-position: -4480px 0;
+    }
+
+    78.89% {
+        background-position: -4544px 0;
+    }
+
+    80.00% {
+        background-position: -4608px 0;
+    }
+
+    81.11% {
+        background-position: -4672px 0;
+    }
+
+    82.22% {
+        background-position: -4736px 0;
+    }
+
+    83.33% {
+        background-position: -4800px 0;
+    }
+
+    84.44% {
+        background-position: -4864px 0;
+    }
+
+    85.56% {
+        background-position: -4928px 0;
+    }
+
+    86.67% {
+        background-position: -4992px 0;
+    }
+
+    87.78% {
+        background-position: -5056px 0;
+    }
+
+    88.89% {
+        background-position: -5120px 0;
+    }
+
+    90.00% {
+        background-position: -5184px 0;
+    }
+
+    91.11% {
+        background-position: -5248px 0;
+    }
+
+    92.22% {
+        background-position: -5312px 0;
+    }
+
+    93.33% {
+        background-position: -5376px 0;
+    }
+
+    94.44% {
+        background-position: -5440px 0;
+    }
+
+    95.56% {
+        background-position: -5504px 0;
+    }
+
+    96.67% {
+        background-position: -5568px 0;
+    }
+
+    97.78% {
+        background-position: -5632px 0;
+    }
+
+    98.89%, to {
+        background-position: -5696px 0;
+    }
+}
+@keyframes keyframes-stopB {
+    0%,to {
+        width: 64px;
+        height: 64px;
+        background-image: url(img/pause.png)
+    }
+}
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+
+    .transcription-header {
+        padding: 16px 20px;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .meeting-info {
+        order: 3;
+        width: 100%;
+        text-align: left;
+    }
+
+    .transcription-content {
+        padding: 20px;
+    }
+
+    .recording-panel {
+        flex-direction: column;
+        gap: 12px;
+        padding: 16px;
+        bottom: 20px;
+    }
+
+    .save-btn {
+        display: none;
+    }
+}

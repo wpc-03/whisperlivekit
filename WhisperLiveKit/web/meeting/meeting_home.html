@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>会议转录系统 - 首页</title>
+    <link rel="stylesheet" href="../admin/css/style.css">
+    <link rel="stylesheet" href="css/meeting_home.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>会议转录系统</h1>
+            <div class="user-info">
+                <span id="username">管理员</span>
+                <button id="btn-logout" class="btn-logout">退出</button>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="sidebar">
+                <h3>功能导航</h3>
+                <ul>
+                    <li><a href="#" class="active" data-page="home">首页</a></li>
+                    <li><a href="#" data-page="meetings">会议记录</a></li>
+                    <li><a href="meeting_transcription.html">实时转录</a></li>
+                </ul>
+            </div>
+            
+            <div class="content">
+                <div id="home-content" class="page-content">
+                    <div class="page-header">
+                        <h2>首页</h2>
+                    </div>
+                    <div class="dashboard-cards">
+                        <div class="stat-card">
+                            <div class="stat-label">今日会议</div>
+                            <div class="stat-value">3</div>
+                            <div class="stat-label">个会议</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">录制中</div>
+                            <div class="stat-value">1</div>
+                            <div class="stat-label">个会议</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">已完成</div>
+                            <div class="stat-value">12</div>
+                            <div class="stat-label">个会议</div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">快捷操作</div>
+                        <div class="quick-actions">
+                            <button class="btn btn-primary" id="btn-new-meeting">新建会议</button>
+                            <button class="btn btn-secondary" data-action="view-meetings">查看会议记录</button>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">最近会议</div>
+                        <div class="recent-meetings-list">
+                            <div class="recent-meeting-item">
+                                <div class="recent-meeting-title">项目进度同步会</div>
+                                <div class="recent-meeting-info">
+                                    <span class="status-recording">录制中</span>
+                                    <span>2026-03-31 09:00</span>
+                                </div>
+                            </div>
+                            <div class="recent-meeting-item">
+                                <div class="recent-meeting-title">产品需求评审会</div>
+                                <div class="recent-meeting-info">
+                                    <span class="status-completed">已完成</span>
+                                    <span>2026-03-30 14:00</span>
+                                </div>
+                            </div>
+                            <div class="recent-meeting-item">
+                                <div class="recent-meeting-title">技术架构设计会</div>
+                                <div class="recent-meeting-info">
+                                    <span class="status-completed">已完成</span>
+                                    <span>2026-03-29 10:00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="meetings-content" class="page-content" style="display: none;">
+                    <div class="page-header">
+                        <h2>会议记录</h2>
+                        <div class="header-actions">
+                            <button class="btn btn-secondary">搜索</button>
+                            <button class="btn btn-primary" id="btn-new-meeting2">新建会议</button>
+                        </div>
+                    </div>
+                    <div class="meeting-list">
+                        <div class="card meeting-card">
+                            <div class="meeting-header">
+                                <div class="meeting-title">产品需求评审会</div>
+                                <div class="meeting-status status-completed">已完成</div>
+                            </div>
+                            <div class="meeting-info">
+                                <div class="info-item">
+                                    <span>时间: 2026-03-30 14:00 - 16:00</span>
+                                </div>
+                                <div class="info-item">
+                                    <span>8人参与</span>
+                                </div>
+                                <div class="info-item">
+                                    <span>时长: 120分钟</span>
+                                </div>
+                            </div>
+                            <div class="meeting-preview">
+                                <div class="preview-text">
+                                    <span class="speaker-badge">1</span>
+                                    今天我们主要讨论一下新功能的需求...
+                                </div>
+                            </div>
+                            <div class="meeting-actions">
+                                <button class="btn btn-secondary btn-small btn-view-detail">查看详情</button>
+                                <button class="btn btn-primary btn-small">下载记录</button>
+                            </div>
+                        </div>
+                        <div class="card meeting-card">
+                            <div class="meeting-header">
+                                <div class="meeting-title">技术架构设计会</div>
+                                <div class="meeting-status status-completed">已完成</div>
+                            </div>
+                            <div class="meeting-info">
+                                <div class="info-item">
+                                    <span>时间: 2026-03-29 10:00 - 12:00</span>
+                                </div>
+                                <div class="info-item">
+                                    <span>6人参与</span>
+                                </div>
+                                <div class="info-item">
+                                    <span>时长: 90分钟</span>
+                                </div>
+                            </div>
+                            <div class="meeting-preview">
+                                <div class="preview-text">
+                                    <span class="speaker-badge">2</span>
+                                    关于系统架构，我有几个想法...
+                                </div>
+                            </div>
+                            <div class="meeting-actions">
+                                <button class="btn btn-secondary btn-small btn-view-detail">查看详情</button>
+                                <button class="btn btn-primary btn-small">下载记录</button>
+                            </div>
+                        </div>
+                        <div class="card meeting-card">
+                            <div class="meeting-header">
+                                <div class="meeting-title">项目进度同步会</div>
+                                <div class="meeting-status status-recording">录制中</div>
+                            </div>
+                            <div class="meeting-info">
+                                <div class="info-item">
+                                    <span>时间: 2026-03-31 09:00 - 进行中</span>
+                                </div>
+                                <div class="info-item">
+                                    <span>5人参与</span>
+                                </div>
+                                <div class="info-item">
+                                    <span>已进行: 45分钟</span>
+                                </div>
+                            </div>
+                            <div class="meeting-preview">
+                                <div class="preview-text">
+                                    <span class="speaker-badge">1</span>
+                                    本周的工作进展情况...
+                                </div>
+                            </div>
+                            <div class="meeting-actions">
+                                <button class="btn btn-secondary btn-small" id="btn-live-view">实时查看</button>
+                                <button class="btn btn-primary btn-small">停止录制</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="pagination">
+                        <button class="btn btn-secondary btn-small">上一页</button>
+                        <span class="page-info">第 1 页 / 共 5 页</span>
+                        <button class="btn btn-secondary btn-small">下一页</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="js/meeting_home.js"></script>
+</body>
+</html>
