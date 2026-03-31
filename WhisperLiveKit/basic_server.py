@@ -5,7 +5,7 @@ import time
 from contextlib import asynccontextmanager
 from datetime import timedelta
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, HTTPException, status, Form
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, HTTPException, status, Form, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -18,7 +18,11 @@ from whisperlivekit.auth import user_manager, create_access_token, get_current_a
 from whisperlivekit.keywords_manager import KeywordsManager
 from whisperlivekit.wakewords_manager import WakewordsManager
 from whisperlivekit.config_manager import config_manager
+from whisperlivekit.database import get_all_meetings, get_meeting_by_id, create_meeting, delete_meeting, update_meeting_title
 import whisperlivekit.web as webpkg
+import os
+import shutil
+import json
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logging.getLogger().setLevel(logging.WARNING)
@@ -100,6 +104,17 @@ admin_dir = web_dir / "admin"
 if admin_dir.exists():
     app.mount("/admin", StaticFiles(directory=str(admin_dir), html=True), name="admin")
 
+# 挂载会议系统静态文件目录
+meeting_dir = web_dir / "meeting"
+if meeting_dir.exists():
+    app.mount("/meeting", StaticFiles(directory=str(meeting_dir), html=True), name="meeting")
+
+@app.get("/meeting")
+async def meeting_home_redirect():
+    # 访问 /meeting 时进行重定向到 /meeting/meeting_home.html，以确保前端相对路径能正确解析
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/meeting/meeting_home.html")
+
 @app.get("/")
 async def get():
     return HTMLResponse(get_inline_ui_html())
@@ -126,6 +141,93 @@ async def download_sdk():
     except Exception as e:
         logger.warning(f"下载过程中发生异常: {e}")
         raise
+        
+# 挂载会议录音文件夹
+records_dir = pathlib.Path(__file__).parent / "data" / "records"
+records_dir.mkdir(parents=True, exist_ok=True)
+app.mount("/data/records", StaticFiles(directory=str(records_dir)), name="records")
+
+# 会议记录相关接口
+@app.get("/api/meetings")
+async def api_get_meetings():
+    meetings = get_all_meetings()
+    return JSONResponse(content={"meetings": meetings})
+
+@app.get("/api/meetings/{meeting_id}")
+async def api_get_meeting_detail(meeting_id: str):
+    meeting = get_meeting_by_id(meeting_id)
+    if not meeting:
+        raise HTTPException(status_code=404, detail="Meeting not found")
+    return JSONResponse(content=meeting)
+
+@app.post("/api/meetings")
+async def api_create_meeting(
+    title: str = Form(...),
+    start_time: str = Form(...),
+    duration: int = Form(...),
+    transcription_data: str = Form(...),
+    audio_file: UploadFile = File(...)
+):
+    # 保存音频文件
+    filename = audio_file.filename
+    safe_filename = f"{int(time.time())}_{filename}"
+    file_path = records_dir / safe_filename
+    
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(audio_file.file, buffer)
+        
+    audio_url = f"/data/records/{safe_filename}"
+    
+    # 保存到数据库
+    try:
+        # Validate JSON
+        json.loads(transcription_data)
+        meeting_id = create_meeting(
+            title=title,
+            start_time=start_time,
+            duration=duration,
+            audio_path=audio_url,
+            transcription_data=transcription_data
+        )
+        return JSONResponse(content={"id": meeting_id, "message": "Meeting created successfully"})
+    except Exception as e:
+        logger.error(f"Error creating meeting: {e}")
+        # 如果数据库保存失败，尝试删除刚上传的文件
+        if file_path.exists():
+            file_path.unlink()
+        raise HTTPException(status_code=500, detail="Failed to create meeting record")
+
+@app.delete("/api/meetings/{meeting_id}")
+async def api_delete_meeting(meeting_id: str):
+    meeting = get_meeting_by_id(meeting_id)
+    if not meeting:
+        raise HTTPException(status_code=404, detail="Meeting not found")
+        
+    # 删除音频文件
+    if meeting.get("audio_path"):
+        filename = meeting["audio_path"].split("/")[-1]
+        file_path = records_dir / filename
+        if file_path.exists():
+            file_path.unlink()
+            
+    # 删除数据库记录
+    deleted = delete_meeting(meeting_id)
+    if not deleted:
+        raise HTTPException(status_code=500, detail="Failed to delete meeting record")
+        
+    return JSONResponse(content={"message": "Meeting deleted successfully"})
+
+@app.patch("/api/meetings/{meeting_id}")
+async def api_update_meeting(meeting_id: str, title: str = Form(...)):
+    meeting = get_meeting_by_id(meeting_id)
+    if not meeting:
+        raise HTTPException(status_code=404, detail="Meeting not found")
+    
+    updated = update_meeting_title(meeting_id, title)
+    if not updated:
+        raise HTTPException(status_code=500, detail="Failed to update meeting title")
+    
+    return JSONResponse(content={"message": "Meeting title updated successfully"})
 
 # 认证相关接口
 @app.post("/api/auth/login")
