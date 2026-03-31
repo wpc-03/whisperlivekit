@@ -362,7 +362,7 @@ body {
 .recording-wave .recording-sprite {
     width: 64px;
     height: 64px;
-    background-image: url(img/record.png);
+    background-image: url(../img/record.png);
     background-repeat: no-repeat;
     background-position: 0 0;
     animation-name: keyframes-recordingB;
@@ -378,7 +378,7 @@ body {
 
 .recording-wave .recording-sprite.paused {
     animation-play-state: paused;
-    background-image: url(img/pause.png) !important;
+    background-image: url(../img/pause.png) !important;
     background-position: center center !important;
     opacity: 0.9;
     transform: scale(0.95);
@@ -389,7 +389,8 @@ body {
     0% {
         width: 64px;
         height: 64px;
-        background-image: url(img/record.png);
+        background-image: url(../img/record.png);
+        background-position: 0 0;
     }
 
     1.11% {
@@ -752,7 +753,7 @@ body {
     0%,to {
         width: 64px;
         height: 64px;
-        background-image: url(img/pause.png)
+        background-image: url(../img/pause.png)
     }
 }
 @media (max-width: 768px) {

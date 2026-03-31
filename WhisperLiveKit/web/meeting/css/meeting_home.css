@@ -77,7 +77,6 @@
 
 .recent-meeting-info span {
     font-size: 13px;
-    color: #595959;
 }
 
 .status-completed {
@@ -104,6 +103,27 @@
     gap: 20px;
 }
 
+.meeting-list-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    max-height: calc(100vh - 240px);
+    padding-right: 8px;
+}
+
+.meeting-list-wrapper::-webkit-scrollbar {
+    width: 6px;
+}
+
+.meeting-list-wrapper::-webkit-scrollbar-thumb {
+    background: #d9d9d9;
+    border-radius: 3px;
+}
+
+.meeting-list-wrapper::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 3px;
+}
+
 .meeting-card {
     transition: all 0.2s ease;
 }
@@ -124,6 +144,11 @@
     font-size: 18px;
     font-weight: 600;
     color: #333;
+}
+
+.meeting-title:hover {
+    background: #e8f4ff;
+    cursor: text;
 }
 
 .meeting-status {
@@ -194,12 +219,18 @@
     justify-content: center;
     align-items: center;
     gap: 16px;
-    margin-top: 32px;
-    padding-top: 24px;
-    border-top: 1px solid #f0f0f0;
+    padding: 16px 0;
+    flex-shrink: 0;
 }
 
 .page-info {
     color: #595959;
     font-size: 14px;
+}
+
+#meetings-content {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 120px);
+    overflow: hidden;
 }
