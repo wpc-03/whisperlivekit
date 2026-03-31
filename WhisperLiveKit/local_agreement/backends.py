@@ -142,6 +142,7 @@ class FasterWhisperASR(ASRBase):
             compute_type=compute_type,
             download_root=cache_dir,
         )
+        print(f"model_size_or_path: {model_size_or_path}")
         print(f"Loaded model with device={model.model.device}, compute_type={model.model.compute_type}")
         logger.info(f"Actual device: {model.model.device}")
         logger.info(f"Actual compute_type: {model.model.compute_type}")
