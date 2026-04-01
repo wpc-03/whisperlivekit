@@ -116,14 +116,14 @@ async function deleteWakeword(word) {
 
         if (response && response.ok) {
             loadWakewords();
-            // 自动执行转换功能
             convertWakewords();
+            showToast('删除成功', 'success');
         } else {
-            alert('删除失败');
+            showToast('删除失败', 'error');
         }
     } catch (error) {
         console.error('删除唤醒词错误:', error);
-        alert('删除失败');
+        showToast('删除失败', 'error');
     }
 }
 
@@ -137,10 +137,10 @@ function editWakeword(oldWord, boost, threshold) {
         updateWakeword(oldWord, newWord.trim(), newBoost, newThreshold).then(success => {
             if (success) {
                 loadWakewords();
-                // 自动执行转换功能
                 convertWakewords();
+                showToast('更新成功', 'success');
             } else {
-                alert('更新失败');
+                showToast('更新失败', 'error');
             }
         });
     }
@@ -154,23 +154,14 @@ async function convertWakewords() {
         });
 
         if (response && response.ok) {
-            document.getElementById('convert-message').textContent = '转换成功';
-            document.getElementById('convert-message').className = 'message success';
+            showToast('转换成功', 'success');
         } else {
-            document.getElementById('convert-message').textContent = '转换失败';
-            document.getElementById('convert-message').className = 'message error';
+            showToast('转换失败', 'error');
         }
     } catch (error) {
         console.error('转换唤醒词错误:', error);
-        document.getElementById('convert-message').textContent = '转换失败';
-        document.getElementById('convert-message').className = 'message error';
+        showToast('转换失败', 'error');
     }
-    
-    // 3秒后清除消息
-    setTimeout(() => {
-        document.getElementById('convert-message').textContent = '';
-        document.getElementById('convert-message').className = 'message';
-    }, 3000);
 }
 
 // 页面加载时执行
@@ -194,33 +185,24 @@ window.addEventListener('load', async function() {
         const word = document.getElementById('new-word').value.trim();
         const boost = document.getElementById('new-boost').value ? parseFloat(document.getElementById('new-boost').value) : null;
         const threshold = document.getElementById('new-threshold').value ? parseFloat(document.getElementById('new-threshold').value) : null;
-        const messageElement = document.getElementById('add-message');
         
         if (!word) {
-            messageElement.textContent = '唤醒词不能为空';
-            messageElement.className = 'message error';
+            showToast('唤醒词不能为空', 'warning');
             return;
         }
         
         const success = await addWakeword(word, boost, threshold);
         if (success) {
-            messageElement.textContent = '添加成功';
-            messageElement.className = 'message success';
+            showToast('添加成功', 'success');
             document.getElementById('new-word').value = '';
             document.getElementById('new-boost').value = '';
             document.getElementById('new-threshold').value = '';
             loadWakewords();
-            // 自动执行转换功能
             convertWakewords();
-            setTimeout(() => {
-                messageElement.textContent = '';
-                messageElement.className = 'message';
-            }, 2000);
         } else {
-            messageElement.textContent = '添加失败';
-            messageElement.className = 'message error';
+            showToast('添加失败', 'error');
         }
     });
-    
+
 
 });

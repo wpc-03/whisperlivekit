@@ -47,43 +47,71 @@ hotword_service = None
 keywords_manager = None
 wakewords_manager = None
 
+def reload_services(signum=None, frame=None):
+    global transcription_engine, hotword_service, keywords_manager, wakewords_manager, args
+    logger.info("开始热重载配置和服务...")
+    
+    try:
+        # 重新加载配置
+        config = config_manager.get_config()
+        for key, value in config.items():
+            if hasattr(args, key):
+                setattr(args, key, value)
+            elif key == "backend_policy":
+                if hasattr(args, "backend_policy"):
+                    setattr(args, "backend_policy", value)
+                    
+        # 重新初始化服务
+        logger.info("初始化 TranscriptionEngine...")
+        transcription_engine = TranscriptionEngine(**vars(args), force_reload=True)
+        
+        logger.info("初始化 KeywordsManager...")
+        keywords_file = getattr(args, 'keywords_file', 'keywords.txt')
+        keywords_manager = KeywordsManager(keywords_file)
+        
+        if args.hotword_model_dir:
+            logger.info("初始化 HotwordService...")
+            hw_keywords_file = getattr(args, 'hotword_keywords_file', None)
+            if not hw_keywords_file:
+                hw_keywords_file = f"{args.hotword_model_dir}/keywords.txt"
+                
+            hotword_service = HotwordService(
+                model_dir=args.hotword_model_dir,
+                keywords_file=hw_keywords_file,
+                threshold=args.hotword_threshold,
+                sample_rate=args.hotword_sample_rate,
+                num_threads=args.hotword_threads
+            )
+            
+            logger.info("初始化 WakewordsManager...")
+            wakewords_manager = WakewordsManager(args.hotword_model_dir)
+            logger.info(f"唤醒词检测服务初始化完成，模型目录: {args.hotword_model_dir}，阈值: {args.hotword_threshold}")
+        else:
+            hotword_service = None
+            wakewords_manager = None
+            logger.info("未配置唤醒词模型目录，唤醒词检测服务未初始化")
+            
+        logger.info("热重载完成。")
+    except Exception as e:
+        logger.error(f"热重载失败: {e}", exc_info=True)
+        raise
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):    
-    global transcription_engine, hotword_service, keywords_manager, wakewords_manager
+    # 首次启动初始化
+    reload_services()
     
-    # 初始化转录引擎
-    transcription_engine = TranscriptionEngine(
-        **vars(args),
-    )
-    
-    # 初始化关键词管理器
-    keywords_file = args.keywords_file if hasattr(args, 'keywords_file') else 'keywords.txt'
-    keywords_manager = KeywordsManager(keywords_file)
-    
-    # 初始化唤醒词检测服务
-    if args.hotword_model_dir:
-        # 确定关键词文件路径
-        keywords_file = args.hotword_keywords_file
-        if not keywords_file:
-            keywords_file = f"{args.hotword_model_dir}/keywords.txt"
+    # 尝试注册热重载信号（针对非Windows系统）
+    import signal
+    try:
+        if hasattr(signal, 'SIGHUP'):
+            signal.signal(signal.SIGHUP, reload_services)
+        if hasattr(signal, 'SIGUSR1'):
+            signal.signal(signal.SIGUSR1, reload_services)
+        logger.info("成功注册热重载信号 (SIGHUP/SIGUSR1)")
+    except Exception as e:
+        logger.warning(f"无法注册热重载信号: {e}")
         
-        hotword_service = HotwordService(
-            model_dir=args.hotword_model_dir,
-            keywords_file=keywords_file,
-            threshold=args.hotword_threshold,
-            sample_rate=args.hotword_sample_rate,
-            num_threads=args.hotword_threads
-        )
-        
-        # 初始化唤醒词管理器
-        wakewords_manager = WakewordsManager(args.hotword_model_dir)
-        
-        logger.info(f"唤醒词检测服务初始化完成，模型目录: {args.hotword_model_dir}，阈值: {args.hotword_threshold}")
-    else:
-        hotword_service = None
-        wakewords_manager = None
-        logger.info("未配置唤醒词模型目录，唤醒词检测服务未初始化")
-    
     yield
 
 app = FastAPI(lifespan=lifespan)
@@ -369,9 +397,29 @@ async def get_default_config(current_user: dict = Depends(get_current_active_use
 
 @app.post("/api/config/restart")
 async def restart_service(current_user: dict = Depends(get_current_active_user)):
-    """重启服务（通知管理员需要手动重启）"""
-    logger.info("收到服务重启请求，请手动重启Docker容器使配置生效")
-    return {"message": "配置已保存，请手动重启Docker容器使配置生效", "manual_restart_required": True}
+    """重启服务（热重载配置）"""
+    logger.info("收到服务重载请求，准备进行热重载...")
+    
+    def safe_reload():
+        try:
+            reload_services()
+        except Exception as e:
+            logger.error(f"后台热重载失败: {e}", exc_info=True)
+    
+    try:
+        import threading
+        thread = threading.Thread(target=safe_reload, daemon=True)
+        thread.start()
+        thread.join(timeout=30)
+        
+        if thread.is_alive():
+            logger.warning("热重载超时，可能仍在进行中")
+            return {"message": "热重载正在进行中，请稍后检查服务状态", "manual_restart_required": False}
+        
+        return {"message": "配置已成功热重载，即刻生效", "manual_restart_required": False}
+    except Exception as e:
+        logger.error(f"热重载失败: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"热重载失败: {str(e)}")
 
 
 async def handle_websocket_results(websocket, results_generator):

@@ -123,12 +123,12 @@ body {
 }
 
 .action-btn-primary {
-    background: #6366f1;
+    background: #409eff;
     color: white;
 }
 
 .action-btn-primary:hover {
-    background: #4f46e5;
+    background: #79bbff;
 }
 
 .transcription-content {

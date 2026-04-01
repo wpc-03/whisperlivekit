@@ -238,6 +238,14 @@ document.addEventListener('DOMContentLoaded', async function() {
         return parseFloat(str);
     }
 
+    function formatTimeDisplay(seconds) {
+        if (seconds === null || seconds === undefined) return '';
+        const totalSeconds = Math.floor(seconds);
+        const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+        const secs = (totalSeconds % 60).toString().padStart(2, '0');
+        return `${minutes}:${secs}`;
+    }
+
     // ASR & Rendering logic
     function renderLines(lines, buffer_transcription, buffer_diarization) {
         currentTranscriptionData = lines || [];
@@ -253,6 +261,14 @@ document.addEventListener('DOMContentLoaded', async function() {
             const startSec = parseTimeToSeconds(item.start);
             const endSec = parseTimeToSeconds(item.end);
             
+            let timeStr = '';
+            if (startSec !== null) {
+                timeStr = formatTimeDisplay(startSec);
+                if (endSec !== null) {
+                    timeStr += ` - ${formatTimeDisplay(endSec)}`;
+                }
+            }
+            
             div.innerHTML = `
                 <div class="speaker-info">
                     <div class="speaker-avatar">
@@ -262,7 +278,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                         </svg>
                     </div>
                     <div class="speaker-name">发言人 ${item.speaker}</div>
-                    <div class="speaker-time">${startSec !== null ? startSec.toFixed(2) : ''} - ${endSec !== null ? endSec.toFixed(2) : ''}</div>
+                    <div class="speaker-time" data-time="${startSec !== null ? startSec : 0}" style="cursor: pointer; color: #6366f1;" title="点击跳转播放">${timeStr}</div>
                 </div>
                 <div class="transcription-text">
                     ${item.text || ''}

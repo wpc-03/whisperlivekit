@@ -37,7 +37,7 @@ body {
 .login-box h2 {
     text-align: center;
     margin-bottom: 30px;
-    color: #1890ff;
+    color: #409eff;
     font-size: 20px;
     font-weight: 500;
 }
@@ -56,16 +56,26 @@ body {
 .form-group input {
     width: 100%;
     padding: 12px 15px;
-    border: 1px solid #d9d9d9;
+    border: 1px solid #dcdfe6;
     border-radius: 4px;
     font-size: 14px;
     transition: all 0.3s;
+    color: #606266;
+    background-color: white;
+}
+
+.form-group input:hover {
+    border-color: #c0c4cc;
 }
 
 .form-group input:focus {
     outline: none;
-    border-color: #1890ff;
-    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+    border-color: #409eff;
+    box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
+}
+
+.form-group input::placeholder {
+    color: #c0c4cc;
 }
 
 .btn {
@@ -82,17 +92,16 @@ body {
 }
 
 .btn-primary {
-    background-color: #1677ff;
+    background-color: #409eff;
     color: white;
     border: none;
     border-radius: 4px;
-    box-shadow: 0 2px 6px rgba(22, 119, 255, 0.4);
-    height: 34px;
+    height: 36px;
     min-width: 120px;
-    padding: 0 16px;
+    padding: 0 20px;
     font-size: 14px;
     font-weight: 500;
-    line-height: 34px;
+    line-height: 36px;
     text-align: center;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -101,13 +110,18 @@ body {
 }
 
 .btn-primary:hover {
-    background-color: #4096ff;
-    box-shadow: 0 4px 12px rgba(22, 119, 255, 0.5);
+    background-color: #79bbff;
 }
 
 .btn-primary:active {
-    background-color: #0958d9;
-    box-shadow: 0 1px 4px rgba(22, 119, 255, 0.6);
+    background-color: #337ecc;
+}
+
+.btn-primary:disabled {
+    background-color: #a0cfff;
+    color: white;
+    cursor: not-allowed;
+    opacity: 0.6;
 }
 
 /* 登录页面按钮特殊样式 */
@@ -120,23 +134,54 @@ body {
 }
 
 .message {
-    margin-top: 20px;
-    padding: 10px;
+    margin-top: 16px;
+    padding: 12px 16px;
     border-radius: 4px;
-    text-align: center;
     font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    animation: slideIn 0.3s ease;
 }
 
 .message.error {
-    background-color: #fff2f0;
-    color: #ff4d4f;
-    border: 1px solid #ffccc7;
+    background-color: #fef0f0;
+    color: #f56c6c;
+    border: 1px solid #fde2e2;
+    box-shadow: 0 2px 8px rgba(245, 108, 108, 0.1);
 }
 
 .message.success {
-    background-color: #f6ffed;
-    color: #52c41a;
-    border: 1px solid #b7eb8f;
+    background-color: #f0f9eb;
+    color: #67c23a;
+    border: 1px solid #e1f3d8;
+    box-shadow: 0 2px 8px rgba(103, 194, 58, 0.1);
+}
+
+.message.warning {
+    background-color: #fdf6ec;
+    color: #e6a23c;
+    border: 1px solid #faecd8;
+    box-shadow: 0 2px 8px rgba(230, 162, 60, 0.1);
+}
+
+.message.info {
+    background-color: #f4f4f5;
+    color: #909399;
+    border: 1px solid #e9e9eb;
+    box-shadow: 0 2px 8px rgba(144, 147, 153, 0.1);
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* 主控制台样式 - eladmin风格 */
@@ -165,7 +210,7 @@ body {
 .header h1 {
     font-size: 20px;
     font-weight: 500;
-    color: #1677ff;
+    color: #409eff;
 }
 
 .header .user-info {
@@ -179,28 +224,25 @@ body {
 }
 
 .header .btn-logout {
-    background-color: #1677ff;
+    background-color: #409eff;
     color: white;
     padding: 8px 20px;
     border: none;
-    border-radius: 6px;
+    border-radius: 4px;
     cursor: pointer;
     font-size: 14px;
     font-weight: 500;
     transition: all 0.2s ease;
-    box-shadow: 0 2px 6px rgba(22, 119, 255, 0.4);
     line-height: 20px;
     height: 36px;
 }
 
 .header .btn-logout:hover {
-    background-color: #4096ff;
-    box-shadow: 0 4px 12px rgba(22, 119, 255, 0.5);
+    background-color: #79bbff;
 }
 
 .header .btn-logout:active {
-    background-color: #0958d9;
-    box-shadow: 0 1px 4px rgba(22, 119, 255, 0.6);
+    background-color: #337ecc;
 }
 
 /* 主体内容区域 */
@@ -214,7 +256,7 @@ body {
 .sidebar {
     width: 220px;
     background-color: white;
-    border-right: 1px solid #e8e8e8;
+    border-right: 1px solid #ebeef5;
     height: calc(100vh - 72px);
     overflow-y: auto;
     transition: all 0.3s;
@@ -253,19 +295,19 @@ body {
 }
 
 .sidebar ul li a:hover {
-    background-color: #f5f5f5;
+    background-color: #f5f7fa;
     color: #333;
 }
 
 .sidebar ul li a.active {
-    background-color: #1677ff;
+    background-color: #409eff;
     color: white;
-    border-right-color: #1677ff;
+    border-right-color: #409eff;
     font-weight: 500;
 }
 
 .sidebar ul li a.active:hover {
-    background-color: #4096ff;
+    background-color: #79bbff;
     color: white;
 }
 
@@ -287,14 +329,16 @@ body {
 /* 卡片样式 */
 .card {
     background-color: white;
-    border-radius: 6px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+    border: 1px solid #ebeef5;
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
     padding: 24px;
     margin-bottom: 24px;
     transition: all 0.2s ease;
 }
 
 .card:hover {
+    border-color: #dcdfe6;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
     transform: translateY(-1px);
 }
@@ -323,15 +367,16 @@ body {
 }
 
 .card .status-success {
-    color: #52c41a;
+    color: #67c23a;
     font-weight: 500;
 }
 
 /* 统计卡片样式 */
 .stat-card {
     background-color: white;
-    border-radius: 6px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+    border: 1px solid #ebeef5;
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
     padding: 24px;
     margin-bottom: 24px;
     text-align: center;
@@ -339,14 +384,15 @@ body {
 }
 
 .stat-card:hover {
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.14);
-    transform: translateY(-2px);
+    border-color: #dcdfe6;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    transform: translateY(-1px);
 }
 
 .stat-value {
     font-size: 36px;
     font-weight: 600;
-    color: #1677ff;
+    color: #409eff;
     margin: 12px 0 8px;
 }
 
@@ -359,8 +405,9 @@ body {
 /* 表格样式 */
 .table-container {
     background-color: white;
-    border-radius: 6px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+    border: 1px solid #ebeef5;
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
     overflow: hidden;
     margin-bottom: 24px;
 }
@@ -373,20 +420,20 @@ table {
 table th, table td {
     padding: 14px 20px;
     text-align: left;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid #ebeef5;
     font-size: 14px;
 }
 
 table th {
     background-color: #f8f9fa;
     font-weight: 600;
-    color: #333;
+    color: #303133;
     font-size: 14px;
-    border-bottom: 2px solid #e8e8e8;
+    border-bottom: 2px solid #ebeef5;
 }
 
 table td {
-    color: #595959;
+    color: #606266;
     font-weight: 400;
 }
 
@@ -399,11 +446,11 @@ table tbody tr:nth-child(even) {
 }
 
 table tbody tr:hover {
-    background-color: #f5f5f5;
+    background-color: #f5f7fa;
 }
 
 table tbody tr:nth-child(even):hover {
-    background-color: #f0f0f0;
+    background-color: #f5f7fa;
 }
 
 /* 表格操作按钮样式 */
@@ -452,33 +499,33 @@ table .btn:last-child {
 .form-row textarea {
     width: 100%;
     padding: 10px 14px;
-    border: 1px solid #d9d9d9;
-    border-radius: 6px;
+    border: 1px solid #dcdfe6;
+    border-radius: 4px;
     font-size: 14px;
     transition: all 0.2s ease;
     background-color: white;
-    color: #333;
+    color: #606266;
     line-height: 20px;
 }
 
 .form-row input:hover,
 .form-row select:hover,
 .form-row textarea:hover {
-    border-color: #bfbfbf;
+    border-color: #c0c4cc;
 }
 
 .form-row input:focus,
 .form-row select:focus,
 .form-row textarea:focus {
     outline: none;
-    border-color: #1677ff;
-    box-shadow: 0 0 0 3px rgba(22, 119, 255, 0.15);
+    border-color: #409eff;
+    box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
 }
 
 .form-row input::placeholder,
 .form-row select::placeholder,
 .form-row textarea::placeholder {
-    color: #bfbfbf;
+    color: #c0c4cc;
 }
 
 /* 表单分组样式 */
@@ -508,15 +555,15 @@ table .btn:last-child {
 /* 按钮样式 */
 .btn-secondary {
     background-color: white;
-    color: #333;
-    border: 1px solid #d9d9d9;
+    color: #606266;
+    border: 1px solid #dcdfe6;
     border-radius: 4px;
-    height: 34px;
+    height: 36px;
     min-width: 120px;
-    padding: 0 16px;
+    padding: 0 20px;
     font-size: 14px;
     font-weight: 500;
-    line-height: 32px; /* 考虑边框高度，保持垂直居中 */
+    line-height: 34px;
     text-align: center;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -526,28 +573,35 @@ table .btn:last-child {
 
 .btn-secondary:hover {
     color: #409eff;
-    border-color: #c6e2ff;
+    border-color: #409eff;
     background-color: #ecf5ff;
 }
 
 .btn-secondary:active {
-    color: #3a8ee6;
-    border-color: #3a8ee6;
-    outline: none;
+    color: #337ecc;
+    border-color: #337ecc;
+    background-color: #d9ecff;
+}
+
+.btn-secondary:disabled {
+    color: #c0c4cc;
+    border-color: #e4e7ed;
+    background-color: white;
+    cursor: not-allowed;
+    opacity: 0.6;
 }
 
 .btn-danger {
-    background-color: #ff4d4f;
+    background-color: #f56c6c;
     color: white;
     border: none;
-    border-radius: 6px;
-    box-shadow: 0 2px 6px rgba(255, 77, 79, 0.4);
-    height: 34px;
+    border-radius: 4px;
+    height: 36px;
     min-width: 80px;
-    padding: 0 16px;
+    padding: 0 20px;
     font-size: 14px;
     font-weight: 500;
-    line-height: 34px;
+    line-height: 36px;
     text-align: center;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -556,40 +610,197 @@ table .btn:last-child {
 }
 
 .btn-danger:hover {
-    background-color: #ff7875;
-    box-shadow: 0 4px 12px rgba(255, 77, 79, 0.5);
+    background-color: #f78989;
 }
 
 .btn-danger:active {
-    background-color: #d9363e;
-    box-shadow: 0 1px 4px rgba(255, 77, 79, 0.6);
+    background-color: #dd6161;
+}
+
+.btn-danger:disabled {
+    background-color: #fab6b6;
+    color: white;
+    cursor: not-allowed;
+    opacity: 0.6;
 }
 
 .btn-success {
-    background-color: #52c41a;
+    background-color: #67c23a;
     color: white;
+    border: none;
+    border-radius: 4px;
+    height: 36px;
+    min-width: 120px;
+    padding: 0 20px;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 36px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    white-space: nowrap;
 }
 
 .btn-success:hover {
-    background-color: #73d13d;
+    background-color: #85ce61;
+}
+
+.btn-success:active {
+    background-color: #5daf34;
+}
+
+.btn-success:disabled {
+    background-color: #b3e19d;
+    color: white;
+    cursor: not-allowed;
+    opacity: 0.6;
 }
 
 .btn-warning {
-    background-color: #faad14;
+    background-color: #e6a23c;
     color: white;
+    border: none;
+    border-radius: 4px;
+    height: 36px;
+    min-width: 120px;
+    padding: 0 20px;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 36px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    white-space: nowrap;
 }
 
 .btn-warning:hover {
-    background-color: #ffc53d;
+    background-color: #ebb563;
+}
+
+.btn-warning:active {
+    background-color: #cf9236;
+}
+
+.btn-warning:disabled {
+    background-color: #f3d19e;
+    color: white;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.btn-info {
+    background-color: #909399;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    height: 36px;
+    min-width: 120px;
+    padding: 0 20px;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 36px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    white-space: nowrap;
+}
+
+.btn-info:hover {
+    background-color: #a6a9ad;
+}
+
+.btn-info:active {
+    background-color: #82848a;
+}
+
+.btn-info:disabled {
+    background-color: #c8c9cc;
+    color: white;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.btn-text {
+    background-color: transparent;
+    color: #409eff;
+    border: none;
+    height: 36px;
+    min-width: auto;
+    padding: 0 12px;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 36px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    white-space: nowrap;
+}
+
+.btn-text:hover {
+    color: #79bbff;
+}
+
+.btn-text:active {
+    color: #337ecc;
+}
+
+.btn-text:disabled {
+    color: #c0c4cc;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.btn-plain {
+    background-color: transparent;
+    border: 1px solid currentColor;
+}
+
+.btn-plain:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.btn-plain:active {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.btn-round {
+    border-radius: 20px;
+}
+
+.btn-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    padding: 0;
+    min-width: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-circle.btn-small {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+}
+
+.btn-circle.btn-large {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
 }
 
 /* 按钮大小 - 参考elementui */
 .btn-large {
-    height: 34px;
-    padding: 0 16px;
+    height: 36px;
+    padding: 0 20px;
     font-size: 14px;
-    line-height: 34px;
-    border-radius: 4px;
+    line-height: 36px;
+    border-radius: 8px;
 }
 
 /* 按钮容器 */
@@ -635,8 +846,8 @@ table .btn:last-child {
     
     .sidebar ul li a.active {
         border-right: none;
-        border-bottom-color: #1677ff;
-        background-color: #1677ff;
+        border-bottom-color: #409eff;
+        background-color: #409eff;
         color: white;
     }
     
@@ -703,4 +914,78 @@ table .btn:last-child {
     .settings-card {
         max-height: calc(100vh - 150px);
     }
+}
+
+/* 滚动条样式 - 只应用于内容区域 */
+.content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.content::-webkit-scrollbar-thumb {
+    background: #d9d9d9;
+    border-radius: 3px;
+}
+
+.content::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 3px;
+}
+
+.content::-webkit-scrollbar-thumb:hover {
+    background: #bfbfbf;
+}
+
+.sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: #d9d9d9;
+    border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background: #bfbfbf;
+}
+
+.settings-card::-webkit-scrollbar {
+    width: 6px;
+}
+
+.settings-card::-webkit-scrollbar-thumb {
+    background: #d9d9d9;
+    border-radius: 3px;
+}
+
+.settings-card::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 3px;
+}
+
+.settings-card::-webkit-scrollbar-thumb:hover {
+    background: #bfbfbf;
+}
+
+.table-container::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+    background: #d9d9d9;
+    border-radius: 3px;
+}
+
+.table-container::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 3px;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+    background: #bfbfbf;
 }

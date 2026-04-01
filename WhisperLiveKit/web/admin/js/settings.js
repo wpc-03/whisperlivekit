@@ -1,10 +1,42 @@
 // 参数设置页面逻辑
 
+// 缓存唤醒词模型目录，用于禁用后再启用时恢复
+let cachedHotwordModelDir = '';
+
 // 加载用户信息
 async function loadUserInfo() {
     const user = await getCurrentUser();
     if (user) {
         document.getElementById('username').textContent = user.username;
+    }
+}
+
+// 更新唤醒词设置项的显示状态
+function updateHotwordSettingsVisibility() {
+    const hotwordEnabled = document.getElementById('hotword_enabled');
+    const hotwordSettingsGroup = document.getElementById('hotword-settings-group');
+    const hotwordModelDirInput = document.getElementById('hotword_model_dir');
+    
+    if (hotwordEnabled && hotwordSettingsGroup) {
+        const isEnabled = hotwordEnabled.value === 'true';
+        hotwordSettingsGroup.style.display = isEnabled ? 'block' : 'none';
+        
+        // 禁用时保存当前值到缓存，启用时从缓存恢复
+        if (!isEnabled && hotwordModelDirInput) {
+            cachedHotwordModelDir = hotwordModelDirInput.value;
+        } else if (isEnabled && hotwordModelDirInput && cachedHotwordModelDir) {
+            hotwordModelDirInput.value = cachedHotwordModelDir;
+        }
+    }
+}
+
+// 更新说话人识别设置项的显示状态
+function updateDiarizationSettingsVisibility() {
+    const diarizationSelect = document.getElementById('diarization');
+    const diarizationSettingsGroup = document.getElementById('diarization-settings-group');
+    
+    if (diarizationSelect && diarizationSettingsGroup) {
+        diarizationSettingsGroup.style.display = diarizationSelect.value === 'true' ? 'block' : 'none';
     }
 }
 
@@ -16,13 +48,11 @@ async function loadSettings() {
             const settings = await response.json();
             populateSettingsForm(settings);
         } else {
-            document.getElementById('settings-message').textContent = '加载设置失败';
-            document.getElementById('settings-message').className = 'message error';
+            showToast('加载设置失败', 'error');
         }
     } catch (error) {
         console.error('加载设置错误:', error);
-        document.getElementById('settings-message').textContent = '加载设置失败';
-        document.getElementById('settings-message').className = 'message error';
+        showToast('加载设置失败', 'error');
     }
 }
 
@@ -131,6 +161,7 @@ function populateSettingsForm(settings) {
     // 说话人识别
     if (settings.diarization !== undefined) {
         document.getElementById('diarization').value = settings.diarization.toString();
+        updateDiarizationSettingsVisibility();
     }
     if (settings.diarization_model) {
         document.getElementById('diarization_model').value = settings.diarization_model;
@@ -140,8 +171,18 @@ function populateSettingsForm(settings) {
     }
     
     // 唤醒词设置
+    const hotwordEnabled = document.getElementById('hotword_enabled');
+    const hasHotwordModelDir = settings.hotword_model_dir && settings.hotword_model_dir.trim() !== '';
+    
+    // 缓存 hotword_model_dir 的值，用于禁用后再启用时恢复
     if (settings.hotword_model_dir) {
+        cachedHotwordModelDir = settings.hotword_model_dir;
         document.getElementById('hotword_model_dir').value = settings.hotword_model_dir;
+    }
+    
+    if (hotwordEnabled) {
+        hotwordEnabled.value = hasHotwordModelDir ? 'true' : 'false';
+        updateHotwordSettingsVisibility();
     }
     if (settings.hotword_threshold !== undefined) {
         document.getElementById('hotword_threshold').value = settings.hotword_threshold;
@@ -202,20 +243,13 @@ async function resetSettings() {
         if (response && response.ok) {
             const result = await response.json();
             loadSettings();
-            document.getElementById('settings-message').textContent = '重置成功' + (result.restart_required ? '，需要重启服务使配置生效' : '');
-            document.getElementById('settings-message').className = 'message success';
-            setTimeout(() => {
-                document.getElementById('settings-message').textContent = '';
-                document.getElementById('settings-message').className = 'message';
-            }, 3000);
+            showToast('重置成功' + (result.restart_required ? '，需要重启服务使配置生效' : ''), 'success');
         } else {
-            document.getElementById('settings-message').textContent = '重置失败';
-            document.getElementById('settings-message').className = 'message error';
+            showToast('重置失败', 'error');
         }
     } catch (error) {
         console.error('重置设置错误:', error);
-        document.getElementById('settings-message').textContent = '重置失败';
-        document.getElementById('settings-message').className = 'message error';
+        showToast('重置失败', 'error');
     }
 }
 
@@ -239,11 +273,21 @@ window.addEventListener('load', async function() {
         modelSelect.addEventListener('change', updateModelPathBasedOnSelection);
     }
     
-    // 保存设置表单处理
-    document.getElementById('settings-form').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        const settings = {
+    // 添加唤醒词启用开关change事件监听器
+    const hotwordEnabledSelect = document.getElementById('hotword_enabled');
+    if (hotwordEnabledSelect) {
+        hotwordEnabledSelect.addEventListener('change', updateHotwordSettingsVisibility);
+    }
+    
+    // 添加说话人识别开关change事件监听器
+    const diarizationSelect = document.getElementById('diarization');
+    if (diarizationSelect) {
+        diarizationSelect.addEventListener('change', updateDiarizationSettingsVisibility);
+    }
+    
+    // 收集表单数据
+    function collectFormData() {
+        return {
             host: document.getElementById('host').value,
             port: parseInt(document.getElementById('port').value),
             log_level: document.getElementById('log_level').value,
@@ -262,7 +306,9 @@ window.addEventListener('load', async function() {
             diarization: document.getElementById('diarization').value === 'true',
             diarization_model: document.getElementById('diarization_model').value,
             punctuation_split: document.getElementById('punctuation_split').value === 'true',
-            hotword_model_dir: document.getElementById('hotword_model_dir').value,
+            hotword_model_dir: document.getElementById('hotword_enabled').value === 'true' 
+                ? document.getElementById('hotword_model_dir').value 
+                : '',
             hotword_threshold: parseFloat(document.getElementById('hotword_threshold').value),
             hotword_sample_rate: parseInt(document.getElementById('hotword_sample_rate').value),
             hotword_threads: parseInt(document.getElementById('hotword_threads').value),
@@ -270,24 +316,64 @@ window.addEventListener('load', async function() {
             ssl_keyfile: document.getElementById('ssl_keyfile').value,
             forwarded_allow_ips: document.getElementById('forwarded_allow_ips').value
         };
-        
-        const result = await saveSettings(settings);
-        if (result) {
-            document.getElementById('settings-message').textContent = result.message + (result.restart_required ? '，需要重启服务使配置生效' : '');
-            document.getElementById('settings-message').className = 'message success';
-            
-            setTimeout(() => {
-                document.getElementById('settings-message').textContent = '';
-                document.getElementById('settings-message').className = 'message';
-            }, 3000);
-        } else {
-            document.getElementById('settings-message').textContent = '保存失败';
-            document.getElementById('settings-message').className = 'message error';
-        }
-    });
+    }
     
     // 重置按钮处理
     document.getElementById('btn-reset').addEventListener('click', resetSettings);
+    
+    // 应用配置 (热重载) 按钮处理 - 先保存再热重载
+    document.getElementById('btn-reload').addEventListener('click', async () => {
+        if (!confirm('确定要应用配置吗？将先保存设置再热重载服务。')) {
+            return;
+        }
+        
+        const btn = document.getElementById('btn-reload');
+        
+        // 禁用按钮，防止重复点击
+        btn.disabled = true;
+        btn.style.opacity = '0.5';
+        showToast('正在保存设置...', 'info');
+        
+        try {
+            // 1. 先保存设置
+            const settings = collectFormData();
+            const saveResult = await saveSettings(settings);
+            
+            if (!saveResult) {
+                showToast('保存设置失败', 'error');
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                return;
+            }
+            
+            showToast('设置已保存，正在热重载...', 'info');
+            
+            // 2. 再热重载
+            const token = localStorage.getItem('token');
+            const response = await fetch('/api/config/restart', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                showToast(data.message || '配置已保存并热重载生效', 'success');
+            } else {
+                showToast('热重载失败: ' + (data.detail || '未知错误'), 'error');
+            }
+        } catch (error) {
+            console.error('操作失败:', error);
+            showToast('操作失败，请检查网络连接', 'error');
+        } finally {
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+            }, 3000);
+        }
+    });
 });
 
 

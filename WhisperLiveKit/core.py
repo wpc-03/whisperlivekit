@@ -34,6 +34,30 @@ class TranscriptionEngine:
     def __init__(self, **kwargs):
         # Thread-safe initialization check
         with TranscriptionEngine._lock:
+            # If we're forcing a reload, we should re-initialize
+            if kwargs.get('force_reload', False):
+                TranscriptionEngine._initialized = False
+                
+                # Cleanup existing models to prevent memory leaks
+                if hasattr(self, 'asr') and self.asr is not None:
+                    del self.asr
+                if hasattr(self, 'tokenizer') and self.tokenizer is not None:
+                    del self.tokenizer
+                if hasattr(self, 'diarization') and self.diarization is not None:
+                    del self.diarization
+                if hasattr(self, 'vac_session') and self.vac_session is not None:
+                    del self.vac_session
+                
+                import gc
+                gc.collect()
+                
+                try:
+                    import torch
+                    if torch.cuda.is_available():
+                        torch.cuda.empty_cache()
+                except ImportError:
+                    pass
+                    
             if TranscriptionEngine._initialized:
                 return
             # Set flag immediately to prevent re-initialization

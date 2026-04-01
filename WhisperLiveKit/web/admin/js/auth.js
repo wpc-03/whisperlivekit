@@ -151,19 +151,13 @@ if (document.getElementById('login-form')) {
         
         const username = document.getElementById('username').value;
         const password = document.getElementById('password').value;
-        const messageElement = document.getElementById('login-message');
-        
-        messageElement.textContent = '';
-        messageElement.className = 'message';
         
         const success = await login(username, password);
         if (success) {
-            messageElement.textContent = '登录成功，正在跳转...';
-            messageElement.className = 'message success';
+            showToast('登录成功，正在跳转...', 'success');
             setTimeout(redirectToDashboard, 1000);
         } else {
-            messageElement.textContent = '登录失败，请检查用户名和密码';
-            messageElement.className = 'message error';
+            showToast('登录失败，请检查用户名和密码', 'error');
         }
     });
 }

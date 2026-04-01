@@ -110,12 +110,13 @@ async function deleteKeyword(keyword) {
 
         if (response && response.ok) {
             loadKeywords();
+            showToast('删除成功', 'success');
         } else {
-            alert('删除失败');
+            showToast('删除失败', 'error');
         }
     } catch (error) {
         console.error('删除专业术语错误:', error);
-        alert('删除失败');
+        showToast('删除失败', 'error');
     }
 }
 
@@ -126,8 +127,9 @@ function editKeyword(keyword) {
         updateKeyword(keyword, newKeyword.trim()).then(success => {
             if (success) {
                 loadKeywords();
+                showToast('更新成功', 'success');
             } else {
-                alert('更新失败');
+                showToast('更新失败', 'error');
             }
         });
     }
@@ -152,27 +154,19 @@ window.addEventListener('load', async function() {
         e.preventDefault();
         
         const keyword = document.getElementById('new-keyword').value.trim();
-        const messageElement = document.getElementById('add-message');
         
         if (!keyword) {
-            messageElement.textContent = '术语不能为空';
-            messageElement.className = 'message error';
+            showToast('术语不能为空', 'warning');
             return;
         }
         
         const success = await addKeyword(keyword);
         if (success) {
-            messageElement.textContent = '添加成功';
-            messageElement.className = 'message success';
+            showToast('添加成功', 'success');
             document.getElementById('new-keyword').value = '';
             loadKeywords();
-            setTimeout(() => {
-                messageElement.textContent = '';
-                messageElement.className = 'message';
-            }, 2000);
         } else {
-            messageElement.textContent = '添加失败';
-            messageElement.className = 'message error';
+            showToast('添加失败', 'error');
         }
     });
 });
