@@ -99,3 +99,17 @@ def update_meeting_title(meeting_id, new_title):
     updated = cursor.rowcount > 0
     conn.close()
     return updated
+
+def update_meeting_transcription(meeting_id, transcription_data):
+    """更新会议的转录数据"""
+    # 确保 transcription_data 是字符串
+    if not isinstance(transcription_data, str):
+        transcription_data = json.dumps(transcription_data)
+        
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('UPDATE meetings SET transcription_data = ? WHERE id = ?', (transcription_data, meeting_id))
+    conn.commit()
+    updated = cursor.rowcount > 0
+    conn.close()
+    return updated

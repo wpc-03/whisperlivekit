@@ -18,7 +18,7 @@ from whisperlivekit.auth import user_manager, create_access_token, get_current_a
 from whisperlivekit.keywords_manager import KeywordsManager
 from whisperlivekit.wakewords_manager import WakewordsManager
 from whisperlivekit.config_manager import config_manager
-from whisperlivekit.database import get_all_meetings, get_meeting_by_id, create_meeting, delete_meeting, update_meeting_title
+from whisperlivekit.database import get_all_meetings, get_meeting_by_id, create_meeting, delete_meeting, update_meeting_title, update_meeting_transcription
 import whisperlivekit.web as webpkg
 import os
 import shutil
@@ -46,6 +46,35 @@ transcription_engine = None
 hotword_service = None
 keywords_manager = None
 wakewords_manager = None
+
+def safe_signal_handler(signum=None, frame=None):
+    """安全的信号处理器，捕获所有异常"""
+    logger.info(f"收到信号 {signum}，开始安全热重载...")
+    try:
+        # 在独立线程中执行热重载，避免阻塞信号处理
+        import threading
+        
+        def run_reload():
+            try:
+                success = reload_services()
+                if success:
+                    logger.info(f"信号 {signum} 触发的热重载成功")
+                else:
+                    logger.error(f"信号 {signum} 触发的热重载失败，服务状态可能不一致")
+            except Exception as e:
+                logger.error(f"信号处理器中的热重载异常: {e}", exc_info=True)
+        
+        thread = threading.Thread(target=run_reload, daemon=True)
+        thread.start()
+        
+        # 等待一段时间，但不阻塞信号处理
+        thread.join(timeout=5)  # 5秒超时
+        
+        if thread.is_alive():
+            logger.warning(f"信号 {signum} 触发的热重载可能仍在进行中")
+            
+    except Exception as e:
+        logger.error(f"信号处理器本身发生异常: {e}", exc_info=True)
 
 def reload_services(signum=None, frame=None):
     global transcription_engine, hotword_service, keywords_manager, wakewords_manager, args
@@ -92,9 +121,10 @@ def reload_services(signum=None, frame=None):
             logger.info("未配置唤醒词模型目录，唤醒词检测服务未初始化")
             
         logger.info("热重载完成。")
+        return True
     except Exception as e:
         logger.error(f"热重载失败: {e}", exc_info=True)
-        raise
+        return False
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):    
@@ -105,10 +135,10 @@ async def lifespan(app: FastAPI):
     import signal
     try:
         if hasattr(signal, 'SIGHUP'):
-            signal.signal(signal.SIGHUP, reload_services)
+            signal.signal(signal.SIGHUP, safe_signal_handler)
         if hasattr(signal, 'SIGUSR1'):
-            signal.signal(signal.SIGUSR1, reload_services)
-        logger.info("成功注册热重载信号 (SIGHUP/SIGUSR1)")
+            signal.signal(signal.SIGUSR1, safe_signal_handler)
+        logger.info("成功注册安全的热重载信号处理器 (SIGHUP/SIGUSR1)")
     except Exception as e:
         logger.warning(f"无法注册热重载信号: {e}")
         
@@ -246,16 +276,39 @@ async def api_delete_meeting(meeting_id: str):
     return JSONResponse(content={"message": "Meeting deleted successfully"})
 
 @app.patch("/api/meetings/{meeting_id}")
-async def api_update_meeting(meeting_id: str, title: str = Form(...)):
+async def api_update_meeting(meeting_id: str, title: str = Form(None), transcription_data: str = Form(None)):
     meeting = get_meeting_by_id(meeting_id)
     if not meeting:
         raise HTTPException(status_code=404, detail="Meeting not found")
     
-    updated = update_meeting_title(meeting_id, title)
-    if not updated:
-        raise HTTPException(status_code=500, detail="Failed to update meeting title")
+    updated = False
+    message_parts = []
     
-    return JSONResponse(content={"message": "Meeting title updated successfully"})
+    if title is not None:
+        title_updated = update_meeting_title(meeting_id, title)
+        if not title_updated:
+            raise HTTPException(status_code=500, detail="Failed to update meeting title")
+        updated = True
+        message_parts.append("标题")
+    
+    if transcription_data is not None:
+        # 验证 transcription_data 是否为有效的 JSON
+        try:
+            json.loads(transcription_data)
+        except json.JSONDecodeError:
+            raise HTTPException(status_code=400, detail="Invalid JSON in transcription_data")
+        
+        transcription_updated = update_meeting_transcription(meeting_id, transcription_data)
+        if not transcription_updated:
+            raise HTTPException(status_code=500, detail="Failed to update meeting transcription")
+        updated = True
+        message_parts.append("转录数据")
+    
+    if not updated:
+        raise HTTPException(status_code=400, detail="No fields provided for update")
+    
+    message = f"会议{'和'.join(message_parts)}更新成功"
+    return JSONResponse(content={"message": message})
 
 # 认证相关接口
 @app.post("/api/auth/login")
@@ -400,23 +453,61 @@ async def restart_service(current_user: dict = Depends(get_current_active_user))
     """重启服务（热重载配置）"""
     logger.info("收到服务重载请求，准备进行热重载...")
     
-    def safe_reload():
-        try:
-            reload_services()
-        except Exception as e:
-            logger.error(f"后台热重载失败: {e}", exc_info=True)
-    
     try:
         import threading
+        
+        # 使用Event来同步线程完成状态
+        completion_event = threading.Event()
+        result_container = [None]  # 用于存储线程执行结果
+        
+        def safe_reload():
+            """安全的重载函数，设置完成事件并存储结果"""
+            try:
+                success = reload_services()
+                if not success:
+                    logger.error("后台热重载失败（reload_services返回False）")
+                    result_container[0] = False
+                else:
+                    result_container[0] = True
+            except Exception as e:
+                logger.error(f"后台热重载失败: {e}", exc_info=True)
+                result_container[0] = False
+            finally:
+                # 无论成功还是失败，都标记完成
+                completion_event.set()
+        
         thread = threading.Thread(target=safe_reload, daemon=True)
         thread.start()
-        thread.join(timeout=30)
         
-        if thread.is_alive():
-            logger.warning("热重载超时，可能仍在进行中")
-            return {"message": "热重载正在进行中，请稍后检查服务状态", "manual_restart_required": False}
+        # 等待线程完成，最多60秒
+        completed = completion_event.wait(timeout=60)
         
-        return {"message": "配置已成功热重载，即刻生效", "manual_restart_required": False}
+        if not completed:
+            # 超时，线程仍在运行
+            logger.warning("热重载超时（60秒），可能仍在进行中")
+            return {
+                "message": "热重载超时，可能仍在进行中，请稍后检查服务状态",
+                "status": "timeout",
+                "manual_restart_required": False
+            }
+        
+        # 线程已完成，获取结果
+        success = result_container[0]
+        if success:
+            logger.info("热重载成功完成")
+            return {
+                "message": "配置已成功热重载，即刻生效",
+                "status": "success",
+                "manual_restart_required": False
+            }
+        else:
+            logger.error("热重载失败")
+            return {
+                "message": "热重载失败，请检查日志",
+                "status": "failed",
+                "manual_restart_required": False
+            }
+            
     except Exception as e:
         logger.error(f"热重载失败: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"热重载失败: {str(e)}")

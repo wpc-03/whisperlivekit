@@ -244,12 +244,35 @@ document.addEventListener('DOMContentLoaded', async function() {
                 transcriptionText.appendChild(textarea);
                 textarea.focus();
 
-                const saveEdit = function() {
+                const saveEdit = async function() {
                     const newText = textarea.value.trim();
                     if (newText) {
                         transcriptionText.textContent = newText;
                         showToast('已保存修改', 'success');
-                        // TODO: 可选，将修改后的内容同步到后端
+                        
+                        // 更新内存中的转录数据
+                        transcriptions[index].text = newText;
+                        
+                        // 同步到后端
+                        try {
+                            const formData = new FormData();
+                            formData.append('transcription_data', JSON.stringify(transcriptions));
+                            
+                            const response = await fetch(`/api/meetings/${meetingId}`, {
+                                method: 'PATCH',
+                                body: formData
+                            });
+                            
+                            if (!response.ok) {
+                                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                            }
+                            
+                            const result = await response.json();
+                            showToast('保存成功', 'success');
+                        } catch (error) {
+                            console.error('保存失败:', error);
+                            showToast('保存失败，请稍后重试', 'error');
+                        }
                     } else {
                         transcriptionText.innerHTML = originalContent;
                     }
