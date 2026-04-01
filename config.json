@@ -20,7 +20,7 @@
   "diarization_model": "D:/python/FastWhisperTranscriber/model/models--nvidia--diar_streaming_sortformer_4spk-v2",
   "punctuation_split": true,
   "hotword_model_dir_demo": "D:/python/FastWhisperTranscriber/model/sherpa-onnx-kws-zipformer-wenetspeech",
-  "hotword_model_dir": "D:\\python\\FastWhisperTranscriber\\model\\sherpa-onnx-kws-zipformer-wenetspeech",
+  "hotword_model_dir": "",
   "hotword_threshold": 0.6,
   "hotword_sample_rate": 16000,
   "hotword_threads": 4,
