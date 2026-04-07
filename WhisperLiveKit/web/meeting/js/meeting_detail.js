@@ -152,6 +152,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
             const div = document.createElement('div');
             div.className = 'transcription-item';
+            div.dataset.segmentId = item.id || '';
             div.innerHTML = `
                 <div class="speaker-info">
                     <div class="speaker-avatar ${speakerClass}">${avatarChar}</div>
@@ -248,30 +249,31 @@ document.addEventListener('DOMContentLoaded', async function() {
                     const newText = textarea.value.trim();
                     if (newText) {
                         transcriptionText.textContent = newText;
-                        showToast('已保存修改', 'success');
-                        
+
                         // 更新内存中的转录数据
                         transcriptions[index].text = newText;
-                        
-                        // 同步到后端
-                        try {
-                            const formData = new FormData();
-                            formData.append('transcription_data', JSON.stringify(transcriptions));
-                            
-                            const response = await fetch(`/api/meetings/${meetingId}`, {
-                                method: 'PATCH',
-                                body: formData
-                            });
-                            
-                            if (!response.ok) {
-                                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+
+                        // 同步到后端（单条更新）
+                        const segmentId = div.dataset.segmentId;
+                        if (segmentId) {
+                            try {
+                                const response = await fetch(`/api/meetings/${meetingId}/segments/${segmentId}`, {
+                                    method: 'PATCH',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ text: newText })
+                                });
+
+                                if (!response.ok) {
+                                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                                }
+
+                                showToast('保存成功', 'success');
+                            } catch (error) {
+                                console.error('保存失败:', error);
+                                showToast('保存失败，请稍后重试', 'error');
                             }
-                            
-                            const result = await response.json();
-                            showToast('保存成功', 'success');
-                        } catch (error) {
-                            console.error('保存失败:', error);
-                            showToast('保存失败，请稍后重试', 'error');
+                        } else {
+                            showToast('已保存修改', 'success');
                         }
                     } else {
                         transcriptionText.innerHTML = originalContent;

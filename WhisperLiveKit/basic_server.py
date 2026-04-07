@@ -18,7 +18,7 @@ from whisperlivekit.auth import user_manager, create_access_token, get_current_a
 from whisperlivekit.keywords_manager import KeywordsManager
 from whisperlivekit.wakewords_manager import WakewordsManager
 from whisperlivekit.config_manager import config_manager
-from whisperlivekit.database import get_all_meetings, get_meeting_by_id, create_meeting, delete_meeting, update_meeting_title, update_meeting_transcription
+from whisperlivekit.database import get_all_meetings, get_meeting_by_id, create_meeting, delete_meeting, update_meeting_title, update_segment_text
 import whisperlivekit.web as webpkg
 import os
 import shutil
@@ -276,39 +276,36 @@ async def api_delete_meeting(meeting_id: str):
     return JSONResponse(content={"message": "Meeting deleted successfully"})
 
 @app.patch("/api/meetings/{meeting_id}")
-async def api_update_meeting(meeting_id: str, title: str = Form(None), transcription_data: str = Form(None)):
+async def api_update_meeting(meeting_id: str, title: str = Form(None)):
     meeting = get_meeting_by_id(meeting_id)
     if not meeting:
         raise HTTPException(status_code=404, detail="Meeting not found")
-    
-    updated = False
-    message_parts = []
-    
-    if title is not None:
-        title_updated = update_meeting_title(meeting_id, title)
-        if not title_updated:
-            raise HTTPException(status_code=500, detail="Failed to update meeting title")
-        updated = True
-        message_parts.append("标题")
-    
-    if transcription_data is not None:
-        # 验证 transcription_data 是否为有效的 JSON
-        try:
-            json.loads(transcription_data)
-        except json.JSONDecodeError:
-            raise HTTPException(status_code=400, detail="Invalid JSON in transcription_data")
-        
-        transcription_updated = update_meeting_transcription(meeting_id, transcription_data)
-        if not transcription_updated:
-            raise HTTPException(status_code=500, detail="Failed to update meeting transcription")
-        updated = True
-        message_parts.append("转录数据")
-    
-    if not updated:
+
+    if title is None:
         raise HTTPException(status_code=400, detail="No fields provided for update")
-    
-    message = f"会议{'和'.join(message_parts)}更新成功"
-    return JSONResponse(content={"message": message})
+
+    title_updated = update_meeting_title(meeting_id, title)
+    if not title_updated:
+        raise HTTPException(status_code=500, detail="Failed to update meeting title")
+
+    return JSONResponse(content={"message": "会议标题更新成功"})
+
+
+@app.patch("/api/meetings/{meeting_id}/segments/{segment_id}")
+async def api_update_segment(meeting_id: str, segment_id: int, body: dict):
+    meeting = get_meeting_by_id(meeting_id)
+    if not meeting:
+        raise HTTPException(status_code=404, detail="Meeting not found")
+
+    new_text = body.get("text")
+    if new_text is None:
+        raise HTTPException(status_code=400, detail="Missing 'text' field")
+
+    updated = update_segment_text(segment_id, new_text)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Segment not found")
+
+    return JSONResponse(content={"message": "转录条目更新成功", "id": segment_id, "text": new_text})
 
 # 认证相关接口
 @app.post("/api/auth/login")

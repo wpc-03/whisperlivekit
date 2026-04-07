@@ -313,13 +313,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     try {
                         const response = await fetch(`/api/meetings/${id}`, { method: 'DELETE' });
                         if (response.ok) {
+                            showToast('删除成功', 'success');
                             fetchMeetings(); // 重新加载
                         } else {
-                            alert('删除失败');
+                            showToast('删除失败', 'error');
                         }
                     } catch (e) {
                         console.error('Delete error:', e);
-                        alert('删除失败');
+                        showToast('删除失败，请稍后重试', 'error');
                     }
                 }
             });
